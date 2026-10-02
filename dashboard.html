@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — The 10K Experiment</title>
+<meta name="description" content="Interactive analytics dashboard: portfolio returns, stock universe treemap, strategy breakdowns, income tracking, and allocation rings.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #1d1c1a; --surface: #252422; --card: #2b2a27;
+  --border: #363432; --border-lt: #433f3c;
+  --ink: #ece9e3; --ink2: #d5d2cb; --muted: #96938c; --faint: #6e6b64; --dim: #4d4a46;
+  --gain: #4aba82; --gain-soft: rgba(74,186,130,.08);
+  --loss: #d95757; --loss-soft: rgba(217,87,87,.08);
+  --gold: #c4a265; --gold-soft: rgba(196,162,101,.1);
+  --f-serif: "Instrument Serif", Georgia, serif;
+  --f-sans: "Inter", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.65 var(--f-sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--ink); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--gold); }
+
+/* ─── Nav ─── */
+nav { border-bottom: 1px solid var(--border); }
+.nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 52px; }
+.nav-logo { font: 400 18px var(--f-serif); color: var(--ink); letter-spacing: -.01em; }
+.nav-links { display: flex; gap: 28px; margin-left: auto; }
+.nav-links a { font: 500 13px var(--f-sans); color: var(--muted); }
+.nav-links a:hover, .nav-links a.active { color: var(--ink); }
+
+/* ─── Sections ─── */
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 56px 0; }
+.section + .section { border-top: 1px solid var(--border); }
+.section-label { font: 400 13px var(--f-sans); color: var(--faint); text-transform: lowercase; letter-spacing: .04em; margin-bottom: 20px; }
+.gain { color: var(--gain); } .loss { color: var(--loss); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* ─── Page header ─── */
+.page-head { padding: 56px 0 0; }
+.page-head h1 { font: 400 clamp(32px, 5vw, 48px)/1.05 var(--f-serif); margin-bottom: 12px; }
+.page-head h1 em { font-style: italic; color: var(--gold); }
+.page-head .asof { font: 400 13px var(--f-mono); color: var(--faint); }
+
+/* ─── Stat strip ─── */
+.stat-bar { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); margin-top: 40px; }
+.stat-bar-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.stat-cell { padding: 28px 0; }
+.stat-cell + .stat-cell { border-left: 1px solid var(--border); padding-left: 24px; }
+.stat-label { font: 400 12px var(--f-sans); color: var(--faint); margin-bottom: 4px; text-transform: lowercase; }
+.stat-val { font: 600 22px/1.1 var(--f-mono); letter-spacing: -.02em; }
+.stat-note { font: 400 12px var(--f-sans); color: var(--muted); margin-top: 2px; }
+
+/* ─── Performance bars ─── */
+.bar-chart { border: 1px solid var(--border); overflow: hidden; }
+.bar-row { display: grid; grid-template-columns: 180px 1fr 72px; gap: 0; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--border); cursor: default; transition: background .15s; }
+.bar-row:last-child { border-bottom: 0; }
+.bar-row:hover { background: var(--surface); }
+.bar-name { padding: 11px 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bar-name .fam-tag { font: 500 10px var(--f-mono); color: var(--faint); background: var(--bg); border: 1px solid var(--border); padding: 1px 5px; margin-left: 6px; vertical-align: 1px; }
+.bar-track { position: relative; height: 28px; }
+.bar-fill { position: absolute; top: 6px; height: 16px; transition: width .6s ease; min-width: 2px; }
+.bar-fill.neg { }
+.bar-zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--dim); }
+.bar-bench { position: absolute; top: -2px; bottom: -2px; width: 0; border-left: 2px dashed var(--gold); opacity: .6; }
+.bar-ret { font: 600 13px var(--f-mono); text-align: right; padding-right: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 12px; margin-top: 12px; }
+.legend i { display: inline-block; width: 14px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+.legend .bench-i { width: 0; height: 12px; border-left: 2px dashed var(--gold); margin-right: 5px; }
+
+/* ─── Treemap ─── */
+.treemap-wrap { border: 1px solid var(--border); overflow: hidden; padding: 2px; background: var(--bg); }
+.treemap { position: relative; width: 100%; aspect-ratio: 2.4 / 1; }
+.tm-cell { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: default; transition: filter .15s; overflow: hidden; border: 1.5px solid var(--bg); }
+.tm-cell:hover { filter: brightness(1.15); z-index: 2; }
+.tm-cell .tk { font: 600 clamp(9px,1.2vw,14px) var(--f-mono); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.tm-cell .tv { font: 500 clamp(8px,.9vw,11px) var(--f-mono); color: rgba(255,255,255,.75); }
+.treemap-note { font-size: 12px; color: var(--faint); margin-top: 8px; }
+
+/* ─── Family grid ─── */
+.fam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); overflow: hidden; }
+.fam-card { background: var(--surface); padding: 24px; display: grid; gap: 10px; transition: background .15s; }
+.fam-card:hover { background: var(--card); }
+.fam-card .fh { display: flex; align-items: baseline; gap: 10px; }
+.fam-card .fh h3 { font: 400 19px var(--f-serif); color: var(--ink); flex: 1; min-width: 0; }
+.fam-card .pill { font: 500 11px var(--f-mono); }
+.fam-card .pill.g { color: var(--gain); }
+.fam-card .pill.l { color: var(--loss); }
+.fam-card .pill.n { color: var(--gold); }
+.fam-card .avg-val { font: 600 20px var(--f-mono); letter-spacing: -.02em; }
+.fam-card .books { display: grid; gap: 6px; }
+.book-row { display: grid; grid-template-columns: 1fr 60px; align-items: center; gap: 8px; font-size: 13px; }
+.book-row .name { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.book-row .ret { font: 600 13px var(--f-mono); text-align: right; }
+
+/* ─── Income section ─── */
+.income-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); overflow: hidden; }
+.inc-card { background: var(--surface); padding: 24px; display: grid; gap: 14px; }
+.inc-card .inc-head { font: 400 13px var(--f-sans); color: var(--muted); }
+.inc-card .total { font: 600 24px var(--f-mono); }
+.inc-bar-wrap { display: grid; gap: 8px; }
+.inc-bar-row { display: grid; grid-template-columns: 50px 1fr 60px; gap: 10px; align-items: center; font-size: 13px; }
+.inc-bar-row .ticker { font: 600 13px var(--f-mono); color: var(--ink2); }
+.inc-bar-row .bar-outer { height: 8px; background: var(--bg); overflow: hidden; }
+.inc-bar-row .bar-inner { height: 100%; background: var(--gain); }
+.inc-bar-row .amt { font: 500 12px var(--f-mono); color: var(--muted); text-align: right; }
+
+/* ─── Allocation rings ─── */
+.alloc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); overflow: hidden; }
+.alloc-card { background: var(--surface); padding: 16px; display: grid; gap: 6px; align-content: start; text-align: center; }
+.alloc-card h3 { font: 400 12px var(--f-sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alloc-card .av { font: 600 15px var(--f-mono); }
+.alloc-ring { width: 90px; height: 90px; margin: 0 auto; }
+.alloc-note { font-size: 12px; color: var(--faint); margin-top: 8px; }
+
+/* ─── Tooltip ─── */
+#tip { position: fixed; pointer-events: none; background: var(--card); border: 1px solid var(--border-lt); color: var(--ink); font: 13px/1.5 var(--f-sans); padding: 10px 14px; max-width: 300px; z-index: 20; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+#tip b { font-family: var(--f-mono); font-weight: 600; }
+#tip .row { display: flex; justify-content: space-between; gap: 16px; }
+
+/* ─── Footer ─── */
+footer { border-top: 1px solid var(--border); margin-top: 20px; padding: 40px 24px; }
+footer .inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+footer p { font-size: 13px; color: var(--faint); max-width: 520px; line-height: 1.55; }
+footer .right { font: 400 12px var(--f-sans); color: var(--dim); text-align: right; }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .page-head { padding: 36px 0 0; }
+  .stat-cell + .stat-cell { border-left: 0; border-top: 1px solid var(--border); padding-left: 0; }
+  .bar-row { grid-template-columns: 1fr 60px; }
+  .bar-name .fam-tag { display: none; }
+  .bar-track { display: none; }
+  .treemap { aspect-ratio: 1.5/1; }
+  .fam-grid, .income-grid { grid-template-columns: 1fr; }
+  .alloc-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  footer .inner { flex-direction: column; }
+  .wrap, .nav-inner { padding: 0 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .bar-fill, .tm-cell { transition: none; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">The 10K Experiment</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="methodology.html">Methodology</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1><em>Live</em> Dashboard</h1>
+    <span class="asof" id="asof"></span>
+  </div>
+</div>
+
+<div class="stat-bar">
+  <div class="stat-bar-inner" id="stats"></div>
+</div>
+
+<div class="wrap">
+
+  <div class="section">
+    <div class="section-label">portfolio returns, ranked</div>
+    <div class="bar-chart" id="perf-bars"></div>
+    <div class="legend" id="perf-legend"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">stock universe</div>
+    <div class="treemap-wrap"><div class="treemap" id="treemap"></div></div>
+    <div class="treemap-note">Sized by total dollar exposure. Colored by return from entry. Hover for details.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">strategy families</div>
+    <div class="fam-grid" id="fam-grid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">income earned</div>
+    <div class="income-grid" id="income-grid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">capital allocation</div>
+    <div class="alloc-grid" id="alloc-grid"></div>
+    <div class="alloc-note">Holdings vs. cash split for each $10,000 portfolio.</div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="inner">
+    <p>The 10K Experiment is a paper-trading research project. No real money is at risk. This is not financial advice. Past performance of fictional portfolios does not predict future results.</p>
+    <div class="right">Data updated nightly<br>Prices from public markets</div>
+  </div>
+</footer>
+
+<div id="tip" hidden></div>
+
+<script>
+// ──── DATA ────
+const P = [
+  {id:"i1-long",fam:"long",ver:"I1",name:"Growth + index core",start:"2026-06-18",cash:300.27,income:0,realized:0,
+   h:[{t:"VOO",sh:7,px:685.57,mk:701.32},{t:"BRK.B",sh:6,px:498.98,mk:506.79},{t:"MSFT",sh:3,px:390.74,mk:513.41},{t:"GOOGL",sh:2,px:367.32,mk:341.96}]},
+  {id:"i1-climate",fam:"climate",ver:"I1",name:"Single-stock climate",start:"2026-06-18",cash:3973.33,income:0,realized:-1892.52,
+   h:[{t:"NEE",sh:25,px:86.09,mk:74.75},{t:"TSLA",sh:5,px:396.38,mk:369.18}]},
+  {id:"i1-pol",fam:"congress",ver:"I1",name:"Congress consensus",start:"2026-06-18",cash:128.98,income:0,realized:0,
+   h:[{t:"NVDA",sh:20,px:205.19,mk:224.17},{t:"MSFT",sh:7,px:390.74,mk:513.41},{t:"AMD",sh:3,px:520.92,mk:625.19},{t:"GOOGL",sh:4,px:367.32,mk:341.96}]},
+  {id:"i2-long",fam:"long",ver:"I2",name:"Dividend / value",start:"2026-06-18",cash:90.88,income:0,realized:0,
+   h:[{t:"SCHD",sh:150,px:31.93,mk:32.85},{t:"BRK.B",sh:4,px:491.28,mk:506.79},{t:"V",sh:6,px:330.38,mk:366.29},{t:"MSFT",sh:3,px:390.74,mk:513.41}]},
+  {id:"i2-climate",fam:"climate",ver:"I2",name:"Clean-energy ETF + nuclear",start:"2026-06-18",cash:73.58,income:0,realized:0,
+   h:[{t:"ICLN",sh:200,px:20.91,mk:16.71},{t:"CEG",sh:8,px:246.71,mk:265.70},{t:"GEV",sh:2,px:1109.62,mk:949.54},{t:"TAN",sh:50,px:31.03,mk:43.00}]},
+  {id:"i2-pol",fam:"congress",ver:"I2",name:"Pelosi mirror",start:"2026-06-18",cash:91.40,income:0,realized:0,
+   h:[{t:"AMZN",sh:14,px:213.12,mk:244.91},{t:"TEM",sh:40,px:49.06,mk:82.62},{t:"NVDA",sh:14,px:205.19,mk:224.17},{t:"INTC",sh:13,px:131.72,mk:113.76},{t:"UBER",sh:5,px:75.5,mk:68.45}]},
+  {id:"i3-long",fam:"long",ver:"I3",name:"Quality-value compounders",start:"2026-06-18",cash:781.98,income:0,realized:0,
+   h:[{t:"LLY",sh:2,px:1098.0,mk:1183.40},{t:"V",sh:7,px:330.38,mk:366.29},{t:"META",sh:4,px:577.22,mk:730.64},{t:"UNH",sh:6,px:400.08,mk:380.66}]},
+  {id:"i3-climate",fam:"climate",ver:"I3",name:"AI-power buildout",start:"2026-06-18",cash:1337.53,income:0,realized:0,
+   h:[{t:"CEG",sh:8,px:246.71,mk:265.70},{t:"GEV",sh:2,px:1109.62,mk:949.54},{t:"VRT",sh:7,px:333.05,mk:253.55},{t:"NEE",sh:20,px:86.75,mk:74.75}]},
+  {id:"i3-pol",fam:"congress",ver:"I3",name:"Rep. Fields mirror",start:"2026-06-18",cash:246.11,income:0,realized:0,
+   h:[{t:"TSM",sh:6,px:462.12,mk:457.32},{t:"GOOGL",sh:7,px:367.32,mk:341.96},{t:"META",sh:4,px:577.22,mk:730.64},{t:"IREN",sh:35,px:60.03,mk:41.16}]},
+  {id:"x-trump",fam:"trump",ver:"Exp",name:"Trump mirror",start:"2026-06-18",cash:0.73,income:0,realized:-201.16,
+   h:[{t:"NVDA",sh:10.862,px:225.51,mk:224.17},{t:"AXON",sh:5.436,px:450.61,mk:419.45},{t:"TSLA",sh:6.444,px:380.12,mk:369.18},{t:"ABT",sh:23.67,px:103.49,mk:100.11}]},
+  {id:"x-div",fam:"dividend",ver:"Exp",name:"High-yield dividend",start:"2026-06-18",cash:0.15,income:171.26,realized:0,
+   h:[{t:"VZ",sh:44.832,px:44.61,mk:46.50,inc:31.72},{t:"MO",sh:25.723,px:68.03,mk:69.02,inc:28.55},{t:"EPD",sh:48.53,px:36.06,mk:36.66,inc:27.18},{t:"O",sh:24.209,px:61.96,mk:55.02,inc:19.68},{t:"ARCC",sh:79.365,px:18.9,mk:19.17,inc:38.10},{t:"PFE",sh:60.532,px:24.78,mk:28.41,inc:26.03}]},
+  {id:"x-bond",fam:"bonds",ver:"Exp",name:"Bond income ladder",start:"2026-06-18",cash:0.11,income:138.94,realized:0,
+   h:[{t:"HYG",sh:38.061,px:78.82,mk:77.48,inc:45.22},{t:"TLT",sh:29.151,px:85.76,mk:78.62,inc:28.08},{t:"EMB",sh:15.708,px:95.49,mk:91.34,inc:19.14},{t:"BKLN",sh:74.887,px:20.03,mk:20.47,inc:32.81},{t:"SGOV",sh:15.048,px:99.68,mk:100.66,inc:13.69}]},
+  {id:"x-short",fam:"short",ver:"Exp",name:"Short-term catalyst",start:"2026-09-28",cash:1000.88,income:0,realized:0,
+   h:[{t:"NVDA",sh:10.923,px:228.86,mk:224.17},{t:"MU",sh:1.423,px:1053.98,mk:1073.38},{t:"JBL",sh:4.832,px:310.42,mk:306.19},{t:"V",sh:5.412,px:369.5,mk:366.29},{t:"HD",sh:5.153,px:291.05,mk:290.89}]},
+  {id:"x-disc",fam:"discount",ver:"Exp",name:"Discount / value screen",start:"2026-09-28",cash:0.48,income:0,realized:0,
+   h:[{t:"CI",sh:7.357,px:271.83,mk:270.82},{t:"ADBE",sh:8.657,px:231.01,mk:228.86},{t:"TCOM",sh:37.593,px:39.9,mk:38.54},{t:"ZTS",sh:21.279,px:70.49,mk:69.89},{t:"CMCSA",sh:68.838,px:21.79,mk:21.65},{t:"ACN",sh:8.597,px:174.47,mk:172.25}]},
+  {id:"x-infra",fam:"infra",ver:"Exp",name:"AI infrastructure",start:"2026-09-28",cash:202.14,income:0,realized:0,
+   h:[{t:"VST",sh:7.969,px:138.02,mk:140.85},{t:"TLN",sh:2.306,px:303.5,mk:311.20},{t:"GEV",sh:0.947,px:949.77,mk:949.54},{t:"ETN",sh:1.622,px:431.41,mk:432.51},{t:"VRT",sh:3.274,px:244.33,mk:253.55},{t:"MOD",sh:3.427,px:175.04,mk:181.85},{t:"XYL",sh:5.946,px:100.9,mk:101.69},{t:"CIEN",sh:2.326,px:343.92,mk:347.38},{t:"ANET",sh:3.415,px:204.92,mk:205.31},{t:"APH",sh:9.454,px:84.62,mk:84.22},{t:"GLW",sh:4.617,px:151.59,mk:157.83},{t:"EME",sh:1.045,px:765.52,mk:764.60},{t:"EQIX",sh:0.593,px:1011.07,mk:1010.90}]}
+];
+const RET=[{id:"r-i1",name:"Momentum day trading",value:9291.99},{id:"r-i2",name:"Mean-reversion swing",value:10440.90},{id:"r-i3",name:"Momentum swing",value:9285.27}];
+const VOO={inception:685.57,now:701.32};
+const FAM={long:"Long-term",congress:"Congress",climate:"Climate / Tech",trump:"Trump",dividend:"Dividend",bonds:"Bonds",short:"Short-term",discount:"Discount",infra:"AI Infra"};
+
+// ──── COMPUTE ────
+P.forEach(p => {
+  p.hv = p.h.reduce((s,x) => s + x.sh * x.mk, 0);
+  p.value = p.hv + p.cash + (p.income || 0);
+  p.ret = (p.value / 10000 - 1) * 100;
+  p.bench = (VOO.now / VOO.inception - 1) * 100;
+  p.alpha = p.ret - p.bench;
+  p.h.forEach(x => { x.val = x.sh * x.mk; x.ret = (x.mk / x.px - 1) * 100; });
+});
+const sorted = [...P].sort((a,b) => b.ret - a.ret);
+const fmt = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => '$' + Math.round(n).toLocaleString('en-US');
+const sgn = (x,d=2) => (x > 0.004 ? '+' : x < -0.004 ? '−' : '') + Math.abs(x).toFixed(d);
+const cls = x => x > 0.004 ? 'gain' : x < -0.004 ? 'loss' : '';
+
+// ──── HEADER ────
+document.getElementById('asof').textContent = 'Sep 29, 2026 close · VOO $' + VOO.now.toFixed(2);
+
+// ──── STATS ────
+const activeTotal = P.reduce((s,p) => s + p.value, 0);
+const retiredTotal = RET.reduce((s,r) => s + r.value, 0);
+const grand = activeTotal + retiredTotal;
+const cost = 180000;
+const benchPct = P[0].bench;
+const beat = P.filter(p => p.alpha > 0).length;
+const best = sorted[0];
+const totalIncome = P.reduce((s,p) => s + (p.income || 0), 0);
+const uniqueStocks = new Set(); P.forEach(p => p.h.forEach(x => uniqueStocks.add(x.t)));
+
+document.getElementById('stats').innerHTML = `
+  <div class="stat-cell"><div class="stat-label">grand total</div><div class="stat-val">${fmt(grand)}</div><div class="stat-note ${cls(grand/cost-1)}">${sgn((grand/cost-1)*100)}% on ${fmt0(cost)}</div></div>
+  <div class="stat-cell"><div class="stat-label">best portfolio</div><div class="stat-val gain">${fmt(best.value)}</div><div class="stat-note">${best.name} · ${sgn(best.ret)}%</div></div>
+  <div class="stat-cell"><div class="stat-label">beating s&p 500</div><div class="stat-val">${beat} of ${P.length}</div><div class="stat-note">VOO ${sgn(benchPct)}% since Jun 18</div></div>
+  <div class="stat-cell"><div class="stat-label">income collected</div><div class="stat-val gain">${fmt(totalIncome)}</div><div class="stat-note">${uniqueStocks.size} stocks across ${P.length} portfolios</div></div>`;
+
+// ──── TOOLTIP ────
+const tip = document.getElementById('tip');
+function showTip(e, html) {
+  tip.innerHTML = html; tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  const x = Math.min(e.clientX + 14, innerWidth - r.width - 12);
+  const y = Math.min(e.clientY + 16, innerHeight - r.height - 12);
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.hidden = true; }
+
+// ──── PERFORMANCE BARS ────
+const allRets = [...P.map(p => p.ret), ...RET.map(r => (r.value/10000-1)*100)];
+const LO = Math.floor(Math.min(0, ...allRets, -1) / 5) * 5;
+const HI = Math.ceil(Math.max(0, ...allRets, 1) / 5) * 5;
+const pos = x => ((x - LO) / (HI - LO)) * 100;
+
+let barsHtml = '';
+sorted.forEach((p,i) => {
+  const z = pos(0), v = pos(p.ret);
+  const left = Math.min(z, v), w = Math.abs(v - z);
+  const fill = p.ret >= 0 ? 'var(--gain)' : 'var(--loss)';
+  barsHtml += `<div class="bar-row" data-i="${i}">
+    <div class="bar-name">${p.name}<span class="fam-tag">${FAM[p.fam]}</span></div>
+    <div class="bar-track">
+      <div class="bar-zero" style="left:${z}%"></div>
+      <div class="bar-bench" style="left:${pos(benchPct)}%" title="VOO +${benchPct.toFixed(1)}%"></div>
+      <div class="bar-fill${p.ret < 0 ? ' neg' : ''}" style="left:${left}%;width:${Math.max(w,.3)}%;background:${fill}"></div>
+    </div>
+    <div class="bar-ret mono ${cls(p.ret)}">${sgn(p.ret)}%</div>
+  </div>`;
+});
+document.getElementById('perf-bars').innerHTML = barsHtml;
+document.getElementById('perf-legend').innerHTML = `<span><i style="background:var(--gain)"></i>Gain</span><span><i style="background:var(--loss)"></i>Loss</span><span><i class="bench-i"></i>S&P 500 (VOO) +${benchPct.toFixed(1)}%</span>`;
+document.querySelectorAll('.bar-row').forEach(r => {
+  const p = sorted[+r.dataset.i];
+  r.onpointermove = e => showTip(e, `<div style="font-weight:600;margin-bottom:4px">${p.name}</div>
+    <div class="row"><span>Value</span><b>${fmt(p.value)}</b></div>
+    <div class="row"><span>Return</span><b class="${cls(p.ret)}">${sgn(p.ret)}%</b></div>
+    <div class="row"><span>vs S&P</span><b class="${cls(p.alpha)}">${sgn(p.alpha)} pts</b></div>
+    <div class="row"><span>Cash</span><b>${fmt(p.cash)}</b></div>
+    ${p.income ? `<div class="row"><span>Income</span><b class="gain">${fmt(p.income)}</b></div>` : ''}`);
+  r.onpointerleave = hideTip;
+});
+
+// ──── TREEMAP ────
+const stockMap = {};
+P.forEach(p => p.h.forEach(x => {
+  if (!stockMap[x.t]) stockMap[x.t] = {t:x.t, totalVal:0, totalCost:0, count:0, portfolios:[]};
+  stockMap[x.t].totalVal += x.val;
+  stockMap[x.t].totalCost += x.sh * x.px;
+  stockMap[x.t].count++;
+  stockMap[x.t].portfolios.push(p.name);
+}));
+const stocks = Object.values(stockMap).map(s => { s.ret = (s.totalVal / s.totalCost - 1) * 100; return s; }).sort((a,b) => b.totalVal - a.totalVal);
+const totalStockVal = stocks.reduce((s,x) => s + x.totalVal, 0);
+
+function treemap(items, x, y, w, h) {
+  if (!items.length) return [];
+  if (items.length === 1) { items[0].x = x; items[0].y = y; items[0].w = w; items[0].h = h; return items; }
+  const total = items.reduce((s,i) => s + i.area, 0);
+  let row = [items[0]], rowArea = items[0].area;
+  const results = [];
+  function worst(row, side) {
+    const ra = row.reduce((s,i) => s + i.area, 0);
+    let mx = 0;
+    row.forEach(i => {
+      const r = Math.max((side*side*i.area)/(ra*ra), (ra*ra)/(side*side*i.area));
+      if (r > mx) mx = r;
+    });
+    return mx;
+  }
+  const vert = w >= h;
+  const side = vert ? h : w;
+  for (let i = 1; i < items.length; i++) {
+    const newRow = [...row, items[i]];
+    if (worst(newRow, side) <= worst(row, side)) {
+      row = newRow; rowArea += items[i].area;
+    } else {
+      const frac = rowArea / total;
+      let rx, ry, rw, rh;
+      if (vert) { rx = x; ry = y; rw = w * frac; rh = h; } else { rx = x; ry = y; rw = w; rh = h * frac; }
+      let offset = 0;
+      row.forEach(it => {
+        const f = it.area / rowArea;
+        if (vert) { it.x = rx; it.y = ry + offset * rh; it.w = rw; it.h = rh * f; offset += f; }
+        else { it.x = rx + offset * rw; it.y = ry; it.w = rw * f; it.h = rh; offset += f; }
+        results.push(it);
+      });
+      const rest = items.slice(i);
+      if (vert) return results.concat(treemap(rest, x + rw, y, w - rw, h));
+      else return results.concat(treemap(rest, x, y + rh, w, h - rh));
+    }
+  }
+  let offset = 0;
+  row.forEach(it => {
+    const f = it.area / rowArea;
+    if (w >= h) { it.x = x; it.y = y + offset * h; it.w = w; it.h = h * f; offset += f; }
+    else { it.x = x + offset * w; it.y = y; it.w = w * f; it.h = h; offset += f; }
+    results.push(it);
+  });
+  return results;
+}
+
+function retColor(r) {
+  if (r > 20)  return 'hsl(155,55%,35%)';
+  if (r > 10)  return 'hsl(155,45%,30%)';
+  if (r > 5)   return 'hsl(155,38%,27%)';
+  if (r > 2)   return 'hsl(155,30%,25%)';
+  if (r > 0)   return 'hsl(155,22%,23%)';
+  if (r > -2)  return 'hsl(5,20%,26%)';
+  if (r > -5)  return 'hsl(5,30%,28%)';
+  if (r > -10) return 'hsl(5,38%,30%)';
+  if (r > -20) return 'hsl(5,48%,33%)';
+  return 'hsl(5,55%,36%)';
+}
+
+const tmEl = document.getElementById('treemap');
+const tmItems = stocks.map(s => ({...s, area: s.totalVal}));
+const laid = treemap(tmItems, 0, 0, 100, 100);
+tmEl.innerHTML = laid.map(s => {
+  const show = s.w > 4 && s.h > 5;
+  return `<div class="tm-cell" style="left:${s.x}%;top:${s.y}%;width:${s.w}%;height:${s.h}%;background:${retColor(s.ret)}" data-t="${s.t}">
+    ${show ? `<span class="tk">${s.t}</span><span class="tv">${sgn(s.ret,1)}%</span>` : ''}</div>`;
+}).join('');
+tmEl.querySelectorAll('.tm-cell').forEach(c => {
+  const s = stocks.find(x => x.t === c.dataset.t);
+  c.onpointermove = e => showTip(e, `<div style="font-weight:600">${s.t}</div>
+    <div class="row"><span>Total exposure</span><b>${fmt(s.totalVal)}</b></div>
+    <div class="row"><span>Return</span><b class="${cls(s.ret)}">${sgn(s.ret)}%</b></div>
+    <div class="row" style="margin-bottom:2px"><span>${(s.totalVal/totalStockVal*100).toFixed(1)}% of all holdings</span></div>
+    <div style="border-top:1px solid var(--border);padding-top:6px;margin-top:4px">
+      <div style="font:500 11px var(--f-sans);color:var(--faint);text-transform:lowercase;letter-spacing:.03em;margin-bottom:4px">held in ${s.count} portfolio${s.count>1?'s':''}</div>
+      ${s.portfolios.map(n => `<div style="font:400 12px var(--f-sans);color:var(--ink2);padding:1px 0">${n}</div>`).join('')}
+    </div>`);
+  c.onpointerleave = hideTip;
+});
+
+// ──── STRATEGY FAMILIES ────
+const famOrder = ['long','congress','climate','trump','dividend','bonds','short','discount','infra'];
+document.getElementById('fam-grid').innerHTML = famOrder.map(f => {
+  const ps = P.filter(p => p.fam === f).sort((a,b) => b.ret - a.ret);
+  const avg = ps.reduce((s,p) => s + p.value, 0) / ps.length;
+  const avgRet = (avg / 10000 - 1) * 100;
+  const wins = ps.filter(p => p.alpha > 0).length;
+  const pillCls = wins === ps.length ? 'g' : wins === 0 ? 'l' : 'n';
+  const pillTxt = wins === ps.length ? 'Beating index' : wins === 0 ? 'Trailing' : 'Mixed';
+  return `<div class="fam-card">
+    <div class="fh"><h3>${FAM[f]}</h3><span class="pill ${pillCls}">${pillTxt}</span></div>
+    <div class="avg-val ${cls(avgRet)}">${fmt(avg)} <span style="font-size:13px;color:var(--muted)">${sgn(avgRet)}%</span></div>
+    <div class="books">${ps.map(p => `<div class="book-row"><span class="name">${p.name} <span style="color:var(--dim)">· ${p.ver}</span></span><span class="ret ${cls(p.ret)}">${sgn(p.ret)}%</span></div>`).join('')}</div>
+  </div>`;
+}).join('');
+
+// ──── INCOME ────
+const incBooks = P.filter(p => p.income > 0);
+document.getElementById('income-grid').innerHTML = incBooks.map(p => {
+  const maxInc = Math.max(...p.h.filter(x => x.inc).map(x => x.inc));
+  return `<div class="inc-card">
+    <div><div class="inc-head">${p.name}</div><div class="total gain mono">${fmt(p.income)}</div></div>
+    <div class="inc-bar-wrap">${p.h.filter(x => x.inc).sort((a,b) => b.inc - a.inc).map(x => `
+      <div class="inc-bar-row">
+        <span class="ticker">${x.t}</span>
+        <div class="bar-outer"><div class="bar-inner" style="width:${x.inc/maxInc*100}%"></div></div>
+        <span class="amt">${fmt(x.inc)}</span>
+      </div>`).join('')}</div>
+  </div>`;
+}).join('');
+
+// ──── ALLOCATION RINGS ────
+const ringHues = ['#c4a265','#4aba82','#d9a05b','#d95757','#8b9dc3','#7bb38a','#c77d6e','#a8956f','#6e98b8','#b8976e','#929d85','#c4826e','#7a8fa8'];
+function drawRing(holdings, cash, size) {
+  const total = holdings.reduce((s,x) => s + x.val, 0) + cash;
+  const r = size/2 - 2, cx = size/2, cy = size/2;
+  let angle = -Math.PI / 2;
+  let paths = '';
+  holdings.sort((a,b) => b.val - a.val).forEach((x,i) => {
+    const frac = x.val / total;
+    const a1 = angle, a2 = angle + frac * Math.PI * 2;
+    const large = frac > .5 ? 1 : 0;
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const x2 = cx + r*Math.cos(a2), y2 = cy + r*Math.sin(a2);
+    const ir = r * .62;
+    const ix1 = cx + ir*Math.cos(a2), iy1 = cy + ir*Math.sin(a2);
+    const ix2 = cx + ir*Math.cos(a1), iy2 = cy + ir*Math.sin(a1);
+    paths += `<path d="M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} L${ix1},${iy1} A${ir},${ir} 0 ${large} 0 ${ix2},${iy2}Z" fill="${ringHues[i%ringHues.length]}" opacity=".85"/>`;
+    angle = a2;
+  });
+  if (cash > 0) {
+    const frac = cash / total;
+    const a1 = angle, a2 = angle + frac * Math.PI * 2;
+    const large = frac > .5 ? 1 : 0;
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const x2 = cx + r*Math.cos(a2), y2 = cy + r*Math.sin(a2);
+    const ir = r * .62;
+    const ix1 = cx + ir*Math.cos(a2), iy1 = cy + ir*Math.sin(a2);
+    const ix2 = cx + ir*Math.cos(a1), iy2 = cy + ir*Math.sin(a1);
+    paths += `<path d="M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} L${ix1},${iy1} A${ir},${ir} 0 ${large} 0 ${ix2},${iy2}Z" fill="var(--dim)" opacity=".4"/>`;
+  }
+  return `<svg viewBox="0 0 ${size} ${size}" class="alloc-ring">${paths}</svg>`;
+}
+document.getElementById('alloc-grid').innerHTML = sorted.map(p => {
+  return `<div class="alloc-card">
+    <h3>${p.name.length > 22 ? p.name.slice(0,20) + '…' : p.name}</h3>
+    ${drawRing(p.h, p.cash, 90)}
+    <div class="av ${cls(p.ret)}">${fmt(p.value)}</div>
+  </div>`;
+}).join('');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The 10K Experiment</title>
+<meta name="description" content="An ongoing paper-trading experiment: 15 portfolios, real market prices, full transparency.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #1d1c1a; --surface: #252422; --card: #2b2a27;
+  --border: #363432; --border-lt: #433f3c;
+  --ink: #ece9e3; --ink2: #d5d2cb; --muted: #96938c; --faint: #6e6b64; --dim: #4d4a46;
+  --gain: #4aba82; --gain-soft: rgba(74,186,130,.08);
+  --loss: #d95757; --loss-soft: rgba(217,87,87,.08);
+  --gold: #c4a265;
+  --f-serif: "Instrument Serif", Georgia, serif;
+  --f-sans: "Inter", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.65 var(--f-sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--ink); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--gold); }
+
+/* ─── Nav ─── */
+nav { border-bottom: 1px solid var(--border); }
+.nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 52px; }
+.nav-logo { font: 400 18px var(--f-serif); color: var(--ink); letter-spacing: -.01em; }
+.nav-links { display: flex; gap: 28px; margin-left: auto; }
+.nav-links a { font: 500 13px var(--f-sans); color: var(--muted); }
+.nav-links a:hover, .nav-links a.active { color: var(--ink); }
+
+/* ─── Hero ─── */
+.hero { max-width: 1100px; margin: 0 auto; padding: 80px 24px 56px; }
+.hero h1 { font: 400 clamp(44px, 7vw, 80px)/1 var(--f-serif); color: var(--ink); margin-bottom: 24px; }
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero-sub { font-size: 17px; color: var(--muted); max-width: 540px; line-height: 1.6; margin-bottom: 40px; }
+.hero-link { font: 500 14px var(--f-sans); color: var(--gold); display: inline-flex; align-items: center; gap: 6px; }
+.hero-link:hover { color: var(--ink); }
+.hero-link svg { width: 14px; height: 14px; }
+
+/* ─── Stat bar ─── */
+.stat-bar { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
+.stat-bar-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.stat-cell { padding: 28px 0; }
+.stat-cell + .stat-cell { border-left: 1px solid var(--border); padding-left: 24px; }
+.stat-label { font: 400 12px var(--f-sans); color: var(--faint); margin-bottom: 4px; text-transform: lowercase; }
+.stat-val { font: 600 22px/1.1 var(--f-mono); letter-spacing: -.02em; }
+.stat-note { font: 400 12px var(--f-sans); color: var(--muted); margin-top: 2px; }
+.gain { color: var(--gain); } .loss { color: var(--loss); }
+
+/* ─── Sections ─── */
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 64px 0; }
+.section + .section { border-top: 1px solid var(--border); }
+.section-label { font: 400 13px var(--f-sans); color: var(--faint); text-transform: lowercase; letter-spacing: .04em; margin-bottom: 20px; }
+
+/* ─── How it works ─── */
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.rule { background: var(--surface); padding: 28px 24px; }
+.rule h3 { font: 400 17px var(--f-serif); color: var(--ink); margin-bottom: 8px; }
+.rule p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* ─── Scoreboard ─── */
+.board { width: 100%; border-collapse: collapse; font-size: 14px; }
+.board thead th { font: 500 11px var(--f-sans); color: var(--faint); padding: 0 12px 12px; text-align: left; text-transform: lowercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); }
+.board thead th:nth-child(n+3) { text-align: right; }
+.board tbody td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.board tbody td:nth-child(n+3) { text-align: right; font-family: var(--f-mono); font-size: 13px; }
+.board tbody tr { transition: background .15s; }
+.board tbody tr:hover { background: var(--surface); }
+.board .rank { font: 500 13px var(--f-mono); color: var(--dim); width: 32px; }
+.board .pname { font-weight: 500; }
+.board .fam { font: 400 11px var(--f-sans); color: var(--faint); margin-left: 8px; }
+.board .alpha-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+/* ─── Strategies ─── */
+.strat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.strat-card { background: var(--surface); padding: 28px 24px; display: grid; gap: 12px; }
+.strat-card:hover { background: var(--card); }
+.strat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.strat-head h3 { font: 400 19px var(--f-serif); color: var(--ink); }
+.strat-status { font: 500 12px var(--f-mono); }
+.strat-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.strat-foot { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; border-top: 1px solid var(--border); }
+.strat-foot .meta { font-size: 12px; color: var(--faint); }
+.strat-foot .ret { font: 600 16px var(--f-mono); }
+
+/* ─── Footer ─── */
+footer { border-top: 1px solid var(--border); margin-top: 20px; padding: 40px 24px; }
+footer .inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+footer p { font-size: 13px; color: var(--faint); max-width: 520px; line-height: 1.55; }
+footer .right { font: 400 12px var(--f-sans); color: var(--dim); text-align: right; }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .hero { padding: 48px 20px 36px; }
+  .stat-cell + .stat-cell { border-left: 0; border-top: 1px solid var(--border); padding-left: 0; }
+  .strat-grid, .rules { grid-template-columns: 1fr; }
+  .board .fam { display: none; }
+  footer .inner { flex-direction: column; }
+  .wrap, .nav-inner { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">The 10K Experiment</a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="methodology.html">Methodology</a>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>The <em>10K</em><br>Experiment</h1>
+  <p class="hero-sub">Ten thousand dollars and infinite creative portfolio strategies under the control of AI. What will it do?</p>
+  <a href="dashboard.html" class="hero-link">
+    View live dashboard
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
+  </a>
+</div>
+
+<div class="stat-bar">
+  <div class="stat-bar-inner" id="stats"></div>
+</div>
+
+<div class="wrap">
+
+  <div class="section">
+    <div class="section-label">the rules</div>
+    <div class="rules">
+      <div class="rule">
+        <h3>$10,000 per portfolio</h3>
+        <p>Each strategy starts with the same amount. No reloads, no extra capital. If it goes to zero, it stays there.</p>
+      </div>
+      <div class="rule">
+        <h3>Real closing prices</h3>
+        <p>Every position is marked at its actual market close. No simulated prices, no synthetic data.</p>
+      </div>
+      <div class="rule">
+        <h3>AI picks everything</h3>
+        <p>Research, stock selection, position sizing — all done by the AI. Reasoning is documented before each trade. No human overrides.</p>
+      </div>
+      <div class="rule">
+        <h3>Open ledger</h3>
+        <p>Every holding, every trade, every dollar is published. You can verify any number against the market yourself.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">scoreboard</div>
+    <div style="overflow-x:auto">
+      <table class="board" id="board"></table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">strategies</div>
+    <div class="strat-grid" id="strat-grid"></div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="inner">
+    <p>The 10K Experiment is a paper-trading research project. No real money is at risk. This is not financial advice. Past performance of fictional portfolios does not predict future results.</p>
+    <div class="right">Data updated nightly<br>Prices from public markets</div>
+  </div>
+</footer>
+
+<script>
+const P = [
+  {id:"i1-long",fam:"long",ver:"I1",name:"Growth + index core",start:"2026-06-18",cash:300.27,income:0,realized:0,
+   h:[{t:"VOO",sh:7,px:685.57,mk:701.32},{t:"BRK.B",sh:6,px:498.98,mk:506.79},{t:"MSFT",sh:3,px:390.74,mk:513.41},{t:"GOOGL",sh:2,px:367.32,mk:341.96}]},
+  {id:"i1-climate",fam:"climate",ver:"I1",name:"Single-stock climate",start:"2026-06-18",cash:3973.33,income:0,realized:-1892.52,
+   h:[{t:"NEE",sh:25,px:86.09,mk:74.75},{t:"TSLA",sh:5,px:396.38,mk:369.18}]},
+  {id:"i1-pol",fam:"congress",ver:"I1",name:"Congress consensus",start:"2026-06-18",cash:128.98,income:0,realized:0,
+   h:[{t:"NVDA",sh:20,px:205.19,mk:224.17},{t:"MSFT",sh:7,px:390.74,mk:513.41},{t:"AMD",sh:3,px:520.92,mk:625.19},{t:"GOOGL",sh:4,px:367.32,mk:341.96}]},
+  {id:"i2-long",fam:"long",ver:"I2",name:"Dividend / value",start:"2026-06-18",cash:90.88,income:0,realized:0,
+   h:[{t:"SCHD",sh:150,px:31.93,mk:32.85},{t:"BRK.B",sh:4,px:491.28,mk:506.79},{t:"V",sh:6,px:330.38,mk:366.29},{t:"MSFT",sh:3,px:390.74,mk:513.41}]},
+  {id:"i2-climate",fam:"climate",ver:"I2",name:"Clean-energy ETF + nuclear",start:"2026-06-18",cash:73.58,income:0,realized:0,
+   h:[{t:"ICLN",sh:200,px:20.91,mk:16.71},{t:"CEG",sh:8,px:246.71,mk:265.70},{t:"GEV",sh:2,px:1109.62,mk:949.54},{t:"TAN",sh:50,px:31.03,mk:43.00}]},
+  {id:"i2-pol",fam:"congress",ver:"I2",name:"Pelosi mirror",start:"2026-06-18",cash:91.40,income:0,realized:0,
+   h:[{t:"AMZN",sh:14,px:213.12,mk:244.91},{t:"TEM",sh:40,px:49.06,mk:82.62},{t:"NVDA",sh:14,px:205.19,mk:224.17},{t:"INTC",sh:13,px:131.72,mk:113.76},{t:"UBER",sh:5,px:75.5,mk:68.45}]},
+  {id:"i3-long",fam:"long",ver:"I3",name:"Quality-value compounders",start:"2026-06-18",cash:781.98,income:0,realized:0,
+   h:[{t:"LLY",sh:2,px:1098.0,mk:1183.40},{t:"V",sh:7,px:330.38,mk:366.29},{t:"META",sh:4,px:577.22,mk:730.64},{t:"UNH",sh:6,px:400.08,mk:380.66}]},
+  {id:"i3-climate",fam:"climate",ver:"I3",name:"AI-power buildout",start:"2026-06-18",cash:1337.53,income:0,realized:0,
+   h:[{t:"CEG",sh:8,px:246.71,mk:265.70},{t:"GEV",sh:2,px:1109.62,mk:949.54},{t:"VRT",sh:7,px:333.05,mk:253.55},{t:"NEE",sh:20,px:86.75,mk:74.75}]},
+  {id:"i3-pol",fam:"congress",ver:"I3",name:"Rep. Fields mirror",start:"2026-06-18",cash:246.11,income:0,realized:0,
+   h:[{t:"TSM",sh:6,px:462.12,mk:457.32},{t:"GOOGL",sh:7,px:367.32,mk:341.96},{t:"META",sh:4,px:577.22,mk:730.64},{t:"IREN",sh:35,px:60.03,mk:41.16}]},
+  {id:"x-trump",fam:"trump",ver:"Exp",name:"Trump mirror",start:"2026-06-18",cash:0.73,income:0,realized:-201.16,
+   h:[{t:"NVDA",sh:10.862,px:225.51,mk:224.17},{t:"AXON",sh:5.436,px:450.61,mk:419.45},{t:"TSLA",sh:6.444,px:380.12,mk:369.18},{t:"ABT",sh:23.67,px:103.49,mk:100.11}]},
+  {id:"x-div",fam:"dividend",ver:"Exp",name:"High-yield dividend",start:"2026-06-18",cash:0.15,income:171.26,realized:0,
+   h:[{t:"VZ",sh:44.832,px:44.61,mk:46.50,inc:31.72},{t:"MO",sh:25.723,px:68.03,mk:69.02,inc:28.55},{t:"EPD",sh:48.53,px:36.06,mk:36.66,inc:27.18},{t:"O",sh:24.209,px:61.96,mk:55.02,inc:19.68},{t:"ARCC",sh:79.365,px:18.9,mk:19.17,inc:38.10},{t:"PFE",sh:60.532,px:24.78,mk:28.41,inc:26.03}]},
+  {id:"x-bond",fam:"bonds",ver:"Exp",name:"Bond income ladder",start:"2026-06-18",cash:0.11,income:138.94,realized:0,
+   h:[{t:"HYG",sh:38.061,px:78.82,mk:77.48,inc:45.22},{t:"TLT",sh:29.151,px:85.76,mk:78.62,inc:28.08},{t:"EMB",sh:15.708,px:95.49,mk:91.34,inc:19.14},{t:"BKLN",sh:74.887,px:20.03,mk:20.47,inc:32.81},{t:"SGOV",sh:15.048,px:99.68,mk:100.66,inc:13.69}]},
+  {id:"x-short",fam:"short",ver:"Exp",name:"Short-term catalyst",start:"2026-09-28",cash:1000.88,income:0,realized:0,
+   h:[{t:"NVDA",sh:10.923,px:228.86,mk:224.17},{t:"MU",sh:1.423,px:1053.98,mk:1073.38},{t:"JBL",sh:4.832,px:310.42,mk:306.19},{t:"V",sh:5.412,px:369.5,mk:366.29},{t:"HD",sh:5.153,px:291.05,mk:290.89}]},
+  {id:"x-disc",fam:"discount",ver:"Exp",name:"Discount / value screen",start:"2026-09-28",cash:0.48,income:0,realized:0,
+   h:[{t:"CI",sh:7.357,px:271.83,mk:270.82},{t:"ADBE",sh:8.657,px:231.01,mk:228.86},{t:"TCOM",sh:37.593,px:39.9,mk:38.54},{t:"ZTS",sh:21.279,px:70.49,mk:69.89},{t:"CMCSA",sh:68.838,px:21.79,mk:21.65},{t:"ACN",sh:8.597,px:174.47,mk:172.25}]},
+  {id:"x-infra",fam:"infra",ver:"Exp",name:"AI infrastructure",start:"2026-09-28",cash:202.14,income:0,realized:0,
+   h:[{t:"VST",sh:7.969,px:138.02,mk:140.85},{t:"TLN",sh:2.306,px:303.5,mk:311.20},{t:"GEV",sh:0.947,px:949.77,mk:949.54},{t:"ETN",sh:1.622,px:431.41,mk:432.51},{t:"VRT",sh:3.274,px:244.33,mk:253.55},{t:"MOD",sh:3.427,px:175.04,mk:181.85},{t:"XYL",sh:5.946,px:100.9,mk:101.69},{t:"CIEN",sh:2.326,px:343.92,mk:347.38},{t:"ANET",sh:3.415,px:204.92,mk:205.31},{t:"APH",sh:9.454,px:84.62,mk:84.22},{t:"GLW",sh:4.617,px:151.59,mk:157.83},{t:"EME",sh:1.045,px:765.52,mk:764.60},{t:"EQIX",sh:0.593,px:1011.07,mk:1010.90}]}
+];
+const RET=[{id:"r-i1",name:"Momentum day trading",value:9291.99},{id:"r-i2",name:"Mean-reversion swing",value:10440.90},{id:"r-i3",name:"Momentum swing",value:9285.27}];
+const VOO={inception:685.57,now:701.32};
+const FAM={long:"Long-term",congress:"Congress",climate:"Climate / Tech",trump:"Trump",dividend:"Dividend",bonds:"Bonds",short:"Short-term",discount:"Discount",infra:"AI Infra"};
+const FAM_DESC={
+  long:"Three portfolios built for decades — index cores, dividend aristocrats, and quality compounders. The boring money.",
+  congress:"Mirror trades disclosed by members of Congress. If the people writing the rules are buying, maybe they know something.",
+  climate:"Clean energy, nuclear, EV, and grid infrastructure. The thesis is that the energy transition is real, but volatile.",
+  trump:"Replicating the trades from Trump-associated financial disclosures. Political investing, taken literally.",
+  dividend:"Six high-yield stocks selected purely for income. Reinvesting dividends, compounding quarterly.",
+  bonds:"A five-rung bond ETF ladder from treasuries to high-yield. The anti-stock portfolio.",
+  short:"Quick-hit catalyst trades — earnings plays, momentum setups, sector rotations. Higher turnover, shorter holds.",
+  discount:"Stocks trading below intrinsic value on standard screens — low P/E, high free cash flow, overlooked by the market.",
+  infra:"The picks-and-shovels AI bet: power companies, data centers, networking, and the companies building the infrastructure behind the boom."
+};
+
+// ── Compute ──
+P.forEach(p => {
+  p.hv = p.h.reduce((s,x) => s + x.sh * x.mk, 0);
+  p.value = p.hv + p.cash + (p.income || 0);
+  p.ret = (p.value / 10000 - 1) * 100;
+  p.bench = (VOO.now / VOO.inception - 1) * 100;
+  p.alpha = p.ret - p.bench;
+});
+const sorted = [...P].sort((a,b) => b.ret - a.ret);
+const fmt = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => '$' + Math.round(n).toLocaleString('en-US');
+const sgn = (x,d=2) => (x > 0.004 ? '+' : x < -0.004 ? '−' : '') + Math.abs(x).toFixed(d);
+const cls = x => x > 0.004 ? 'gain' : x < -0.004 ? 'loss' : '';
+
+const activeTotal = P.reduce((s,p) => s + p.value, 0);
+const retiredTotal = RET.reduce((s,r) => s + r.value, 0);
+const grand = activeTotal + retiredTotal;
+const cost = 180000;
+const benchPct = P[0].bench;
+const beat = P.filter(p => p.alpha > 0).length;
+const best = sorted[0];
+const totalIncome = P.reduce((s,p) => s + (p.income || 0), 0);
+const inception = new Date('2026-06-18');
+const today = new Date('2026-09-29');
+const days = Math.floor((today - inception) / 86400000);
+
+// ── Stats ──
+document.getElementById('stats').innerHTML = `
+  <div class="stat-cell"><div class="stat-label">grand total</div><div class="stat-val">${fmt(grand)}</div><div class="stat-note ${cls(grand/cost-1)}">${sgn((grand/cost-1)*100)}% on ${fmt0(cost)} invested</div></div>
+  <div class="stat-cell"><div class="stat-label">experiment age</div><div class="stat-val">${days} days</div><div class="stat-note">since June 18, 2026</div></div>
+  <div class="stat-cell"><div class="stat-label">beating the s&p</div><div class="stat-val">${beat} of ${P.length}</div><div class="stat-note">VOO ${sgn(benchPct)}% same period</div></div>
+  <div class="stat-cell"><div class="stat-label">income collected</div><div class="stat-val gain">${fmt(totalIncome)}</div><div class="stat-note">dividends + interest</div></div>`;
+
+// ── Scoreboard ──
+document.getElementById('board').innerHTML = `
+  <thead><tr><th>#</th><th>portfolio</th><th>value</th><th>return</th><th>vs s&p 500</th></tr></thead>
+  <tbody>${sorted.map((p,i) => `<tr>
+    <td class="rank">${i+1}</td>
+    <td><span class="pname">${p.name}</span><span class="fam">${FAM[p.fam]}</span></td>
+    <td style="font-family:var(--f-mono);font-size:13px">${fmt(p.value)}</td>
+    <td style="font-family:var(--f-mono);font-size:13px" class="${cls(p.ret)}">${sgn(p.ret)}%</td>
+    <td style="font-family:var(--f-mono);font-size:13px" class="${cls(p.alpha)}"><span class="alpha-dot" style="background:${p.alpha>=0?'var(--gain)':'var(--loss)'}"></span>${sgn(p.alpha)} pts</td>
+  </tr>`).join('')}</tbody>`;
+
+// ── Strategies ──
+const famOrder = ['long','congress','climate','trump','dividend','bonds','short','discount','infra'];
+document.getElementById('strat-grid').innerHTML = famOrder.map(f => {
+  const ps = P.filter(p => p.fam === f);
+  const avg = ps.reduce((s,p) => s + p.value, 0) / ps.length;
+  const avgRet = (avg / 10000 - 1) * 100;
+  const wins = ps.filter(p => p.alpha > 0).length;
+  const statusCls = wins === ps.length ? 'gain' : wins === 0 ? 'loss' : '';
+  const statusTxt = wins === ps.length ? 'Beating index' : wins === 0 ? 'Trailing index' : 'Mixed';
+  return `<div class="strat-card">
+    <div class="strat-head"><h3>${FAM[f]}</h3><span class="strat-status ${statusCls}">${statusTxt}</span></div>
+    <div class="strat-desc">${FAM_DESC[f]}</div>
+    <div class="strat-foot">
+      <span class="meta">${ps.length} portfolio${ps.length>1?'s':''}</span>
+      <span class="ret ${cls(avgRet)}">${sgn(avgRet)}%</span>
+    </div>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>

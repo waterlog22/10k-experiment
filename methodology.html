@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Methodology — The 10K Experiment</title>
+  <meta name="description" content="The rules, strategies, and decision framework behind The 10K Experiment — nine strategies, fifteen active portfolios, and a transparent methodology.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <style>
+  :root {
+    --bg: #1d1c1a; --surface: #252422; --card: #2b2a27;
+    --border: #363432; --border-lt: #433f3c;
+    --ink: #ece9e3; --ink2: #d5d2cb; --muted: #96938c; --faint: #6e6b64; --dim: #4d4a46;
+    --gain: #4aba82; --gain-soft: rgba(74,186,130,.08);
+    --loss: #d95757; --loss-soft: rgba(217,87,87,.08);
+    --gold: #c4a265; --gold-soft: rgba(196,162,101,.1);
+    --f-serif: "Instrument Serif", Georgia, serif;
+    --f-sans: "Inter", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, monospace;
+    color-scheme: dark;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.65 var(--f-sans); -webkit-font-smoothing: antialiased; margin: 0; }
+  a { color: var(--ink); text-decoration: none; transition: color .2s; }
+  a:hover { color: var(--gold); }
+
+  /* ─── Nav ─── */
+  nav { border-bottom: 1px solid var(--border); }
+  .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 52px; }
+  .nav-logo { font: 400 18px var(--f-serif); color: var(--ink); letter-spacing: -.01em; }
+  .nav-links { display: flex; gap: 28px; margin-left: auto; }
+  .nav-links a { font: 500 13px var(--f-sans); color: var(--muted); }
+  .nav-links a:hover, .nav-links a.active { color: var(--ink); }
+
+  /* ─── Page head ─── */
+  .page-head { max-width: 1100px; margin: 0 auto; padding: 80px 24px 0; }
+  .page-head h1 { font: 400 clamp(36px, 6vw, 64px)/1.05 var(--f-serif); margin-bottom: 16px; }
+  .page-head h1 em { font-style: italic; color: var(--gold); }
+  .page-lead { font-size: 17px; color: var(--muted); max-width: 600px; line-height: 1.6; }
+
+  /* ─── Sections ─── */
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  .section { padding: 56px 0; }
+  .section + .section { border-top: 1px solid var(--border); }
+  .section-label { font: 400 13px var(--f-sans); color: var(--faint); text-transform: lowercase; letter-spacing: .04em; margin-bottom: 20px; }
+
+  /* ─── Parameters grid ─── */
+  .params { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); overflow: hidden; }
+  .param { background: var(--surface); padding: 28px 24px; }
+  .param .val { font: 400 28px/1.1 var(--f-serif); color: var(--ink); margin-bottom: 8px; }
+  .param .val em { font-style: italic; color: var(--gold); }
+  .param .desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ─── Process steps ─── */
+  .process { display: grid; gap: 0; border: 1px solid var(--border); overflow: hidden; }
+  .step { display: grid; grid-template-columns: 64px 1fr; border-bottom: 1px solid var(--border); transition: background .15s; }
+  .step:last-child { border-bottom: 0; }
+  .step:hover { background: var(--surface); }
+  .step-num { display: flex; align-items: center; justify-content: center; font: 400 20px var(--f-serif); color: var(--gold); border-right: 1px solid var(--border); }
+  .step-body { padding: 24px; }
+  .step-body h3 { font: 400 17px var(--f-serif); color: var(--ink); margin-bottom: 6px; }
+  .step-body p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  /* ─── Strategy cards ─── */
+  .strat-list { display: grid; gap: 0; }
+  .strat-entry { border: 1px solid var(--border); border-bottom: 0; }
+  .strat-entry:last-child { border-bottom: 1px solid var(--border); }
+  .strat-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; padding: 32px 28px 0; }
+  .strat-top h3 { font: 400 clamp(22px, 3vw, 28px)/1.1 var(--f-serif); }
+  .strat-badge { font: 500 11px var(--f-mono); color: var(--gold); border: 1px solid var(--border-lt); padding: 3px 10px; white-space: nowrap; margin-top: 4px; }
+  .strat-thesis { font-size: 15px; color: var(--ink2); line-height: 1.6; padding: 16px 28px 0; max-width: 700px; }
+  .strat-meta { display: flex; flex-wrap: wrap; gap: 0; border-top: 1px solid var(--border); margin-top: 24px; }
+  .strat-meta-cell { flex: 1; min-width: 140px; padding: 16px 28px; border-right: 1px solid var(--border); }
+  .strat-meta-cell:last-child { border-right: 0; }
+  .strat-meta-cell .ml { font: 400 11px var(--f-sans); color: var(--faint); text-transform: lowercase; letter-spacing: .03em; margin-bottom: 2px; }
+  .strat-meta-cell .mv { font: 600 15px var(--f-mono); letter-spacing: -.01em; }
+  .strat-holdings { padding: 0 28px 24px; margin-top: 16px; }
+  .strat-holdings .hl { font: 400 11px var(--f-sans); color: var(--faint); text-transform: lowercase; letter-spacing: .03em; margin-bottom: 10px; }
+  .hold-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .hold-tag { font: 500 12px var(--f-mono); color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 3px 10px; }
+
+  /* ─── Decision framework ─── */
+  .fw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); overflow: hidden; }
+  .fw-card { background: var(--surface); padding: 28px 24px; }
+  .fw-card h3 { font: 400 17px var(--f-serif); color: var(--ink); margin-bottom: 10px; }
+  .fw-card p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .fw-card .metric { display: block; font: 500 12px var(--f-mono); color: var(--gold); margin-top: 10px; }
+
+  /* ─── Footer ─── */
+  footer { border-top: 1px solid var(--border); margin-top: 20px; padding: 40px 24px; }
+  footer .inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+  footer p { font-size: 13px; color: var(--faint); max-width: 520px; line-height: 1.55; }
+  footer .right { font: 400 12px var(--f-sans); color: var(--dim); text-align: right; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 640px) {
+    .page-head { padding: 44px 20px 0; }
+    .params { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 48px 1fr; }
+    .strat-top { grid-template-columns: 1fr; padding: 24px 20px 0; }
+    .strat-thesis { padding: 12px 20px 0; }
+    .strat-meta { flex-direction: column; }
+    .strat-meta-cell { border-right: 0; border-bottom: 1px solid var(--border); padding: 12px 20px; }
+    .strat-meta-cell:last-child { border-bottom: 0; }
+    .strat-holdings { padding: 0 20px 20px; }
+    .fw-grid { grid-template-columns: 1fr; }
+    footer .inner { flex-direction: column; }
+    .wrap, .nav-inner { padding: 0 16px; }
+  }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">The 10K Experiment</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="methodology.html" class="active">Methodology</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page-head">
+  <h1>The <em>Method</em></h1>
+  <p class="page-lead">Nine strategies, fifteen active portfolios, and a set of rules designed to make the experiment honest. Here's how every dollar is allocated, tracked, and measured.</p>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══ Experiment parameters ═══ -->
+  <div class="section">
+    <div class="section-label">experiment parameters</div>
+    <div class="params">
+      <div class="param">
+        <div class="val">$10,000</div>
+        <div class="desc">Starting capital per portfolio. No reloads, no margin. Every strategy gets the same shot.</div>
+      </div>
+      <div class="param">
+        <div class="val"><em>18</em> portfolios</div>
+        <div class="desc">15 active, 3 retired. Each runs independently — no cross-subsidizing between strategies.</div>
+      </div>
+      <div class="param">
+        <div class="val">VOO</div>
+        <div class="desc">The benchmark. Every portfolio is measured against the S&P 500 ETF over the same holding period.</div>
+      </div>
+      <div class="param">
+        <div class="val"><em>Zero</em> overrides</div>
+        <div class="desc">AI selects every stock, sizes every position, and times every entry and exit. No human intervention.</div>
+      </div>
+      <div class="param">
+        <div class="val">Real prices</div>
+        <div class="desc">Positions are marked to actual closing prices from public markets. No simulated or synthetic data.</div>
+      </div>
+      <div class="param">
+        <div class="val">June 18, 2026</div>
+        <div class="desc">Inception date. All original portfolios were funded and invested on the same day.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Process ═══ -->
+  <div class="section">
+    <div class="section-label">daily process</div>
+    <div class="process">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Fetch closing prices</h3>
+          <p>Every evening after market close, the AI pulls real closing prices for every holding across all portfolios.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Check stops and targets</h3>
+          <p>Each position is evaluated against its strategy's rules — stop losses, profit targets, rebalancing triggers, and income collection.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Execute trades</h3>
+          <p>Based on strategy-specific criteria, the AI decides whether to hold, trim, add, or exit each position. All reasoning is documented before execution.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Update the ledger</h3>
+          <p>Every trade, dividend, and price change is recorded. The dashboard, scoreboard, and all analytics are republished with fresh numbers.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Report and analyze</h3>
+          <p>A nightly report summarizes what happened and why. Strategies that aren't working get flagged, and the AI documents what it would do differently.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Strategies ═══ -->
+  <div class="section">
+    <div class="section-label">the nine strategies</div>
+    <div class="strat-list" id="strats"></div>
+  </div>
+
+  <!-- ═══ Decision framework ═══ -->
+  <div class="section">
+    <div class="section-label">decision framework</div>
+    <div class="fw-grid">
+      <div class="fw-card">
+        <h3>Position sizing</h3>
+        <p>No single stock exceeds 35% of its portfolio at entry. Concentration is allowed when conviction is high, but catastrophic loss from one name is capped by design.</p>
+        <span class="metric">max single position: 35%</span>
+      </div>
+      <div class="fw-card">
+        <h3>Entry criteria</h3>
+        <p>Each strategy defines its own entry signals — fundamental screens for value books, disclosure filings for Congress mirrors, sector momentum for climate plays. The AI documents the rationale before buying.</p>
+        <span class="metric">documented before every trade</span>
+      </div>
+      <div class="fw-card">
+        <h3>Exit discipline</h3>
+        <p>Short-term books use trailing stops and profit targets. Long-term books rebalance quarterly. Income books reinvest distributions. Every exit has a rule — no gut calls.</p>
+        <span class="metric">rules-based, never discretionary</span>
+      </div>
+      <div class="fw-card">
+        <h3>Income treatment</h3>
+        <p>Dividends, interest, and distributions are tracked separately. Income portfolios reinvest automatically. Growth portfolios hold income as cash unless redeployed.</p>
+        <span class="metric">tracked to the penny</span>
+      </div>
+      <div class="fw-card">
+        <h3>Benchmark comparison</h3>
+        <p>Every portfolio is measured against VOO (Vanguard S&P 500) over its own holding period. Alpha is the gap between portfolio return and what VOO did over the same days.</p>
+        <span class="metric">alpha = portfolio return − VOO return</span>
+      </div>
+      <div class="fw-card">
+        <h3>Retirement protocol</h3>
+        <p>When a short-term strategy completes its lifecycle or a thesis is fully invalidated, the portfolio is retired. Final value is frozen and counted toward the grand total forever.</p>
+        <span class="metric">3 portfolios retired to date</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ What this is not ═══ -->
+  <div class="section">
+    <div class="section-label">what this is not</div>
+    <div class="process">
+      <div class="step">
+        <div class="step-num" style="color: var(--loss);">&#10005;</div>
+        <div class="step-body">
+          <h3>Not financial advice</h3>
+          <p>This is a research experiment. The portfolios are fictional. No real money is at risk. Nothing here is a recommendation to buy, sell, or hold any security.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="color: var(--loss);">&#10005;</div>
+        <div class="step-body">
+          <h3>Not backtested</h3>
+          <p>Every trade is made in real time with forward-looking logic. There's no hindsight optimization. The AI doesn't know what prices will do tomorrow.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="color: var(--loss);">&#10005;</div>
+        <div class="step-body">
+          <h3>Not a trading signal</h3>
+          <p>Position sizes, entry prices, and timing are specific to this experiment's constraints. Copying these trades in a real account would be unwise and is explicitly discouraged.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="inner">
+    <p>The 10K Experiment is a paper-trading research project. No real money is at risk. This is not financial advice. Past performance of fictional portfolios does not predict future results.</p>
+    <div class="right">Data updated nightly<br>Prices from public markets</div>
+  </div>
+</footer>
+
+<script>
+const STRATS = [
+  {
+    key: 'long', name: 'Long-term Growth', badge: '3 portfolios',
+    thesis: 'The foundational bet: buy quality businesses and hold them for decades. Three portfolios explore different flavors — a broad index core anchored by VOO and Berkshire, a dividend-weighted value tilt through SCHD and blue chips, and a concentrated quality-compounder book built around Lilly, Visa, and Meta. The thesis is that time in the market beats timing the market, and that compounding does the heavy lifting.',
+    horizon: '30+ years', turnover: 'Very low', benchmark: 'VOO',
+    books: ['Growth + index core', 'Dividend / value', 'Quality-value compounders'],
+    holdings: ['VOO','BRK.B','MSFT','GOOGL','SCHD','V','LLY','META','UNH']
+  },
+  {
+    key: 'congress', name: 'Congress Mirror', badge: '3 portfolios',
+    thesis: 'Members of Congress are required to disclose their stock trades. Whether you call it informed insight or insider advantage, their track record is hard to ignore. Three portfolios mirror different approaches — a consensus book that buys whatever multiple members are buying, a Pelosi-specific mirror tracking her household’s disclosed trades, and a book following Rep. Fields’s filings. The question: does the smart money in Washington actually know something?',
+    horizon: 'Medium-term', turnover: 'Moderate', benchmark: 'VOO',
+    books: ['Congress consensus', 'Pelosi mirror', 'Rep. Fields mirror'],
+    holdings: ['NVDA','MSFT','AMD','GOOGL','AMZN','TEM','INTC','UBER','TSM','META','IREN']
+  },
+  {
+    key: 'climate', name: 'Climate / Tech', badge: '3 portfolios',
+    thesis: 'The energy transition is happening whether you believe in it or not — and it’s volatile. Three portfolios span the spectrum: a single-stock bet on Tesla and NextEra, a diversified ETF approach through ICLN and TAN with nuclear exposure via Constellation and GE Vernova, and a pure infrastructure play on the power grid buildout behind AI data centers. The thesis is that clean energy will outperform over the long run, but the ride will be rough.',
+    horizon: 'Long-term', turnover: 'Low', benchmark: 'VOO',
+    books: ['Single-stock climate', 'Clean-energy ETF + nuclear', 'AI-power buildout'],
+    holdings: ['NEE','TSLA','ICLN','CEG','GEV','TAN','VRT']
+  },
+  {
+    key: 'trump', name: 'Trump Mirror', badge: '1 portfolio',
+    thesis: 'A direct replication of trades from Trump-associated financial disclosures. This isn’t about politics — it’s about whether politically connected capital allocation produces alpha. The portfolio mirrors disclosed positions in Nvidia, Axon, Tesla, and Abbott. Political investing, taken literally.',
+    horizon: 'Medium-term', turnover: 'Low', benchmark: 'VOO',
+    books: ['Trump mirror'],
+    holdings: ['NVDA','AXON','TSLA','ABT']
+  },
+  {
+    key: 'dividend', name: 'High-yield Dividend', badge: '1 portfolio',
+    thesis: 'Six stocks selected purely for income yield. The portfolio targets companies paying above-average dividends with a history of sustainability — Verizon, Altria, Enterprise Products, Realty Income, Ares Capital, and Pfizer. All dividends are reinvested to compound quarterly. The bet is that the income stream, not the share price, does the work over time.',
+    horizon: 'Long-term', turnover: 'Very low', benchmark: 'VOO',
+    books: ['High-yield dividend'],
+    holdings: ['VZ','MO','EPD','O','ARCC','PFE']
+  },
+  {
+    key: 'bonds', name: 'Bond Income Ladder', badge: '1 portfolio',
+    thesis: 'The anti-stock portfolio. A five-rung ladder spanning the risk spectrum from government treasuries (SGOV) through investment-grade corporate bonds (BKLN) to high-yield (HYG) and emerging-market debt (EMB), with long-duration Treasuries (TLT) for rate sensitivity. The purpose is both income generation and diversification — what happens when equities sell off?',
+    horizon: 'Indefinite', turnover: 'Very low', benchmark: 'VOO',
+    books: ['Bond income ladder'],
+    holdings: ['HYG','TLT','EMB','BKLN','SGOV']
+  },
+  {
+    key: 'short', name: 'Short-term Catalyst', badge: '1 portfolio',
+    thesis: 'Quick-hit trades built around catalysts — earnings surprises, sector rotations, momentum breakouts, and technical setups. Higher turnover, shorter holds, tighter stops. This is the most active strategy in the experiment, designed to test whether AI can time entries and exits at a pace that justifies the trading friction. Three earlier iterations were retired; this is the current active book.',
+    horizon: 'Days to weeks', turnover: 'High', benchmark: 'VOO',
+    books: ['Short-term catalyst'],
+    holdings: ['NVDA','MU','JBL','V','HD']
+  },
+  {
+    key: 'discount', name: 'Discount / Value Screen', badge: '1 portfolio',
+    thesis: 'Classic value investing translated to a systematic screen. The AI scans for stocks trading below intrinsic value on standard metrics — low P/E, high free cash flow yield, reasonable debt, and above-average return on capital. The current book holds Cigna, Adobe, Trip.com, Zoetis, Comcast, and Accenture. The thesis: the market overreacts, and patience is rewarded.',
+    horizon: 'Medium-term', turnover: 'Moderate', benchmark: 'VOO',
+    books: ['Discount / value screen'],
+    holdings: ['CI','ADBE','TCOM','ZTS','CMCSA','ACN']
+  },
+  {
+    key: 'infra', name: 'AI Infrastructure', badge: '1 portfolio',
+    thesis: 'The picks-and-shovels bet on the AI boom. Instead of buying the AI model companies, this portfolio buys the infrastructure behind them — power generators (Vistra, Talen, GE Vernova), data center operators (Equinix), networking (Ciena, Arista), connectors and electrical (Amphenol, Corning, Eaton), and the construction firms building it all (EMCOR, Modine, Xylem). Thirteen positions across the physical supply chain of compute.',
+    horizon: 'Long-term', turnover: 'Low', benchmark: 'VOO',
+    books: ['AI infrastructure'],
+    holdings: ['VST','TLN','GEV','ETN','VRT','MOD','XYL','CIEN','ANET','APH','GLW','EME','EQIX']
+  }
+];
+
+const colors = {
+  long: 'var(--gain)', congress: 'var(--gold)', climate: '#4a9aba',
+  trump: 'var(--loss)', dividend: '#8b9dc3', bonds: '#7bb38a',
+  short: '#d9a05b', discount: '#a8956f', infra: '#c77d6e'
+};
+
+document.getElementById('strats').innerHTML = STRATS.map((s, i) => `
+  <div class="strat-entry">
+    <div class="strat-top">
+      <h3>${s.name}</h3>
+      <span class="strat-badge">${s.badge}</span>
+    </div>
+    <div class="strat-thesis">${s.thesis}</div>
+    <div class="strat-meta">
+      <div class="strat-meta-cell"><div class="ml">horizon</div><div class="mv">${s.horizon}</div></div>
+      <div class="strat-meta-cell"><div class="ml">turnover</div><div class="mv">${s.turnover}</div></div>
+      <div class="strat-meta-cell"><div class="ml">benchmark</div><div class="mv">${s.benchmark}</div></div>
+      <div class="strat-meta-cell"><div class="ml">sub-portfolios</div><div class="mv">${s.books.length}</div></div>
+    </div>
+    <div class="strat-holdings">
+      <div class="hl">current holdings</div>
+      <div class="hold-grid">${s.holdings.map(h => `<span class="hold-tag">${h}</span>`).join('')}</div>
+    </div>
+  </div>
+`).join('');
+</script>
+
+</body>
+</html>
