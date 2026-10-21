@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>The 10K Experiment</title>
 <meta name="description" content="An ongoing paper-trading experiment: 15 portfolios, real market prices, full transparency.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -179,41 +181,16 @@ footer .right { font: 400 12px var(--f-sans); color: var(--dim); text-align: rig
   </div>
 </footer>
 
+<script src="data.js"></script>
 <script>
-const P = [
-  {id:"i1-long",fam:"long",ver:"I1",name:"Growth + index core",start:"2026-06-18",cash:300.27,income:0,realized:0,
-   h:[{t:"VOO",sh:7,px:685.57,mk:701.32},{t:"BRK.B",sh:6,px:498.98,mk:506.79},{t:"MSFT",sh:3,px:390.74,mk:513.41},{t:"GOOGL",sh:2,px:367.32,mk:341.96}]},
-  {id:"i1-climate",fam:"climate",ver:"I1",name:"Single-stock climate",start:"2026-06-18",cash:3973.33,income:0,realized:-1892.52,
-   h:[{t:"NEE",sh:25,px:86.09,mk:74.75},{t:"TSLA",sh:5,px:396.38,mk:369.18}]},
-  {id:"i1-pol",fam:"congress",ver:"I1",name:"Congress consensus",start:"2026-06-18",cash:128.98,income:0,realized:0,
-   h:[{t:"NVDA",sh:20,px:205.19,mk:224.17},{t:"MSFT",sh:7,px:390.74,mk:513.41},{t:"AMD",sh:3,px:520.92,mk:625.19},{t:"GOOGL",sh:4,px:367.32,mk:341.96}]},
-  {id:"i2-long",fam:"long",ver:"I2",name:"Dividend / value",start:"2026-06-18",cash:90.88,income:0,realized:0,
-   h:[{t:"SCHD",sh:150,px:31.93,mk:32.85},{t:"BRK.B",sh:4,px:491.28,mk:506.79},{t:"V",sh:6,px:330.38,mk:366.29},{t:"MSFT",sh:3,px:390.74,mk:513.41}]},
-  {id:"i2-climate",fam:"climate",ver:"I2",name:"Clean-energy ETF + nuclear",start:"2026-06-18",cash:73.58,income:0,realized:0,
-   h:[{t:"ICLN",sh:200,px:20.91,mk:16.71},{t:"CEG",sh:8,px:246.71,mk:265.70},{t:"GEV",sh:2,px:1109.62,mk:949.54},{t:"TAN",sh:50,px:31.03,mk:43.00}]},
-  {id:"i2-pol",fam:"congress",ver:"I2",name:"Pelosi mirror",start:"2026-06-18",cash:91.40,income:0,realized:0,
-   h:[{t:"AMZN",sh:14,px:213.12,mk:244.91},{t:"TEM",sh:40,px:49.06,mk:82.62},{t:"NVDA",sh:14,px:205.19,mk:224.17},{t:"INTC",sh:13,px:131.72,mk:113.76},{t:"UBER",sh:5,px:75.5,mk:68.45}]},
-  {id:"i3-long",fam:"long",ver:"I3",name:"Quality-value compounders",start:"2026-06-18",cash:781.98,income:0,realized:0,
-   h:[{t:"LLY",sh:2,px:1098.0,mk:1183.40},{t:"V",sh:7,px:330.38,mk:366.29},{t:"META",sh:4,px:577.22,mk:730.64},{t:"UNH",sh:6,px:400.08,mk:380.66}]},
-  {id:"i3-climate",fam:"climate",ver:"I3",name:"AI-power buildout",start:"2026-06-18",cash:1337.53,income:0,realized:0,
-   h:[{t:"CEG",sh:8,px:246.71,mk:265.70},{t:"GEV",sh:2,px:1109.62,mk:949.54},{t:"VRT",sh:7,px:333.05,mk:253.55},{t:"NEE",sh:20,px:86.75,mk:74.75}]},
-  {id:"i3-pol",fam:"congress",ver:"I3",name:"Rep. Fields mirror",start:"2026-06-18",cash:246.11,income:0,realized:0,
-   h:[{t:"TSM",sh:6,px:462.12,mk:457.32},{t:"GOOGL",sh:7,px:367.32,mk:341.96},{t:"META",sh:4,px:577.22,mk:730.64},{t:"IREN",sh:35,px:60.03,mk:41.16}]},
-  {id:"x-trump",fam:"trump",ver:"Exp",name:"Trump mirror",start:"2026-06-18",cash:0.73,income:0,realized:-201.16,
-   h:[{t:"NVDA",sh:10.862,px:225.51,mk:224.17},{t:"AXON",sh:5.436,px:450.61,mk:419.45},{t:"TSLA",sh:6.444,px:380.12,mk:369.18},{t:"ABT",sh:23.67,px:103.49,mk:100.11}]},
-  {id:"x-div",fam:"dividend",ver:"Exp",name:"High-yield dividend",start:"2026-06-18",cash:0.15,income:171.26,realized:0,
-   h:[{t:"VZ",sh:44.832,px:44.61,mk:46.50,inc:31.72},{t:"MO",sh:25.723,px:68.03,mk:69.02,inc:28.55},{t:"EPD",sh:48.53,px:36.06,mk:36.66,inc:27.18},{t:"O",sh:24.209,px:61.96,mk:55.02,inc:19.68},{t:"ARCC",sh:79.365,px:18.9,mk:19.17,inc:38.10},{t:"PFE",sh:60.532,px:24.78,mk:28.41,inc:26.03}]},
-  {id:"x-bond",fam:"bonds",ver:"Exp",name:"Bond income ladder",start:"2026-06-18",cash:0.11,income:138.94,realized:0,
-   h:[{t:"HYG",sh:38.061,px:78.82,mk:77.48,inc:45.22},{t:"TLT",sh:29.151,px:85.76,mk:78.62,inc:28.08},{t:"EMB",sh:15.708,px:95.49,mk:91.34,inc:19.14},{t:"BKLN",sh:74.887,px:20.03,mk:20.47,inc:32.81},{t:"SGOV",sh:15.048,px:99.68,mk:100.66,inc:13.69}]},
-  {id:"x-short",fam:"short",ver:"Exp",name:"Short-term catalyst",start:"2026-09-28",cash:1000.88,income:0,realized:0,
-   h:[{t:"NVDA",sh:10.923,px:228.86,mk:224.17},{t:"MU",sh:1.423,px:1053.98,mk:1073.38},{t:"JBL",sh:4.832,px:310.42,mk:306.19},{t:"V",sh:5.412,px:369.5,mk:366.29},{t:"HD",sh:5.153,px:291.05,mk:290.89}]},
-  {id:"x-disc",fam:"discount",ver:"Exp",name:"Discount / value screen",start:"2026-09-28",cash:0.48,income:0,realized:0,
-   h:[{t:"CI",sh:7.357,px:271.83,mk:270.82},{t:"ADBE",sh:8.657,px:231.01,mk:228.86},{t:"TCOM",sh:37.593,px:39.9,mk:38.54},{t:"ZTS",sh:21.279,px:70.49,mk:69.89},{t:"CMCSA",sh:68.838,px:21.79,mk:21.65},{t:"ACN",sh:8.597,px:174.47,mk:172.25}]},
-  {id:"x-infra",fam:"infra",ver:"Exp",name:"AI infrastructure",start:"2026-09-28",cash:202.14,income:0,realized:0,
-   h:[{t:"VST",sh:7.969,px:138.02,mk:140.85},{t:"TLN",sh:2.306,px:303.5,mk:311.20},{t:"GEV",sh:0.947,px:949.77,mk:949.54},{t:"ETN",sh:1.622,px:431.41,mk:432.51},{t:"VRT",sh:3.274,px:244.33,mk:253.55},{t:"MOD",sh:3.427,px:175.04,mk:181.85},{t:"XYL",sh:5.946,px:100.9,mk:101.69},{t:"CIEN",sh:2.326,px:343.92,mk:347.38},{t:"ANET",sh:3.415,px:204.92,mk:205.31},{t:"APH",sh:9.454,px:84.62,mk:84.22},{t:"GLW",sh:4.617,px:151.59,mk:157.83},{t:"EME",sh:1.045,px:765.52,mk:764.60},{t:"EQIX",sh:0.593,px:1011.07,mk:1010.90}]}
-];
-const RET=[{id:"r-i1",name:"Momentum day trading",value:9291.99},{id:"r-i2",name:"Mean-reversion swing",value:10440.90},{id:"r-i3",name:"Momentum swing",value:9285.27}];
-const VOO={inception:685.57,now:701.32};
+const D = window.TENK;
+const P = D.portfolios.map(p => ({...p, h: p.h.map(x => ({...x}))}));
+const RET = D.retired;
+const VOO = {inception: D.voo["2026-06-18"], now: D.voo.now};
+const benchFor = p => (VOO.now / (D.voo[p.start] || VOO.inception) - 1) * 100;
+const ASOF = new Date(D.asof + "T12:00:00");
+const ASOF_TXT = ASOF.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+
 const FAM={long:"Long-term",congress:"Congress",climate:"Climate / Tech",trump:"Trump",dividend:"Dividend",bonds:"Bonds",short:"Short-term",discount:"Discount",infra:"AI Infra"};
 const FAM_DESC={
   long:"Three portfolios built for decades — index cores, dividend aristocrats, and quality compounders. The boring money.",
@@ -232,7 +209,7 @@ P.forEach(p => {
   p.hv = p.h.reduce((s,x) => s + x.sh * x.mk, 0);
   p.value = p.hv + p.cash + (p.income || 0);
   p.ret = (p.value / 10000 - 1) * 100;
-  p.bench = (VOO.now / VOO.inception - 1) * 100;
+  p.bench = benchFor(p);
   p.alpha = p.ret - p.bench;
 });
 const sorted = [...P].sort((a,b) => b.ret - a.ret);
@@ -250,7 +227,7 @@ const beat = P.filter(p => p.alpha > 0).length;
 const best = sorted[0];
 const totalIncome = P.reduce((s,p) => s + (p.income || 0), 0);
 const inception = new Date('2026-06-18');
-const today = new Date('2026-09-29');
+const today = ASOF;
 const days = Math.floor((today - inception) / 86400000);
 
 // ── Stats ──
