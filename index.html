@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>The 10K Experiment</title>
+<meta name="description" content="An ongoing paper-trading experiment: 15 portfolios, real market prices, full transparency.">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root {
+  --bg: #1d1c1a; --surface: #252422; --card: #2b2a27;
+  --border: #363432; --border-lt: #433f3c;
+  --ink: #ece9e3; --ink2: #d5d2cb; --muted: #96938c; --faint: #6e6b64; --dim: #4d4a46;
+  --gain: #4aba82; --gain-soft: rgba(74,186,130,.08);
+  --loss: #d95757; --loss-soft: rgba(217,87,87,.08);
+  --gold: #c4a265;
+  --f-serif: "Instrument Serif", Georgia, serif;
+  --f-sans: "Inter", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.65 var(--f-sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--ink); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--gold); }
+
+/* ─── Nav ─── */
+nav { border-bottom: 1px solid var(--border); }
+.nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 52px; }
+.nav-logo { font: 400 18px var(--f-serif); color: var(--ink); letter-spacing: -.01em; }
+.nav-links { display: flex; gap: 28px; margin-left: auto; }
+.nav-links a { font: 500 13px var(--f-sans); color: var(--muted); }
+.nav-links a:hover, .nav-links a.active { color: var(--ink); }
+
+/* ─── Hero ─── */
+.hero { max-width: 1100px; margin: 0 auto; padding: 80px 24px 56px; }
+.hero h1 { font: 400 clamp(44px, 7vw, 80px)/1 var(--f-serif); color: var(--ink); margin-bottom: 24px; }
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero-sub { font-size: 17px; color: var(--muted); max-width: 540px; line-height: 1.6; margin-bottom: 40px; }
+.hero-link { font: 500 14px var(--f-sans); color: var(--gold); display: inline-flex; align-items: center; gap: 6px; }
+.hero-link:hover { color: var(--ink); }
+.hero-link svg { width: 14px; height: 14px; }
+
+/* ─── Stat bar ─── */
+.stat-bar { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
+.stat-bar-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.stat-cell { padding: 28px 0; }
+.stat-cell + .stat-cell { border-left: 1px solid var(--border); padding-left: 24px; }
+.stat-label { font: 400 12px var(--f-sans); color: var(--faint); margin-bottom: 4px; text-transform: lowercase; }
+.stat-val { font: 600 22px/1.1 var(--f-mono); letter-spacing: -.02em; }
+.stat-note { font: 400 12px var(--f-sans); color: var(--muted); margin-top: 2px; }
+.gain { color: var(--gain); } .loss { color: var(--loss); }
+
+/* ─── Sections ─── */
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 64px 0; }
+.section + .section { border-top: 1px solid var(--border); }
+.section-label { font: 400 13px var(--f-sans); color: var(--faint); text-transform: lowercase; letter-spacing: .04em; margin-bottom: 20px; }
+
+/* ─── How it works ─── */
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.rule { background: var(--surface); padding: 28px 24px; }
+.rule h3 { font: 400 17px var(--f-serif); color: var(--ink); margin-bottom: 8px; }
+.rule p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* ─── Scoreboard ─── */
+.board { width: 100%; border-collapse: collapse; font-size: 14px; }
+.board thead th { font: 500 11px var(--f-sans); color: var(--faint); padding: 0 12px 12px; text-align: left; text-transform: lowercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); }
+.board thead th:nth-child(n+3) { text-align: right; }
+.board tbody td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.board tbody td:nth-child(n+3) { text-align: right; font-family: var(--f-mono); font-size: 13px; }
+.board tbody tr { transition: background .15s; }
+.board tbody tr:hover { background: var(--surface); }
+.board .rank { font: 500 13px var(--f-mono); color: var(--dim); width: 32px; }
+.board .pname { font-weight: 500; }
+.board .fam { font: 400 11px var(--f-sans); color: var(--faint); margin-left: 8px; }
+.board .alpha-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+/* ─── Strategies ─── */
+.strat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.strat-card { background: var(--surface); padding: 28px 24px; display: grid; gap: 12px; }
+.strat-card:hover { background: var(--card); }
+.strat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.strat-head h3 { font: 400 19px var(--f-serif); color: var(--ink); }
+.strat-status { font: 500 12px var(--f-mono); }
+.strat-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.strat-foot { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; border-top: 1px solid var(--border); }
+.strat-foot .meta { font-size: 12px; color: var(--faint); }
+.strat-foot .ret { font: 600 16px var(--f-mono); }
+
+/* ─── Footer ─── */
+footer { border-top: 1px solid var(--border); margin-top: 20px; padding: 40px 24px; }
+footer .inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+footer p { font-size: 13px; color: var(--faint); max-width: 520px; line-height: 1.55; }
+footer .right { font: 400 12px var(--f-sans); color: var(--dim); text-align: right; }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .hero { padding: 48px 20px 36px; }
+  .stat-cell + .stat-cell { border-left: 0; border-top: 1px solid var(--border); padding-left: 0; }
+  .strat-grid, .rules { grid-template-columns: 1fr; }
+  .board .fam { display: none; }
+  footer .inner { flex-direction: column; }
+  .wrap, .nav-inner { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">The 10K Experiment</a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="methodology.html">Methodology</a>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>The <em>10K</em><br>Experiment</h1>
+  <p class="hero-sub">Ten thousand dollars and infinite creative portfolio strategies under the control of AI. What will it do?</p>
+  <a href="dashboard.html" class="hero-link">
+    View live dashboard
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
+  </a>
+</div>
+
+<div class="stat-bar">
+  <div class="stat-bar-inner" id="stats"></div>
+</div>
+
+<div class="wrap">
+
+  <div class="section">
+    <div class="section-label">the rules</div>
+    <div class="rules">
+      <div class="rule">
+        <h3>$10,000 per portfolio</h3>
+        <p>Each strategy starts with the same amount. No reloads, no extra capital. If it goes to zero, it stays there.</p>
+      </div>
+      <div class="rule">
+        <h3>Real closing prices</h3>
+        <p>Every position is marked at its actual market close. No simulated prices, no synthetic data.</p>
+      </div>
+      <div class="rule">
+        <h3>AI picks everything</h3>
+        <p>Research, stock selection, position sizing — all done by the AI. Reasoning is documented before each trade. No human overrides.</p>
+      </div>
+      <div class="rule">
+        <h3>Open ledger</h3>
+        <p>Every holding, every trade, every dollar is published. You can verify any number against the market yourself.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">scoreboard</div>
+    <div style="overflow-x:auto">
+      <table class="board" id="board"></table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">strategies</div>
+    <div class="strat-grid" id="strat-grid"></div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="inner">
+    <p>The 10K Experiment is a paper-trading research project run by an AI. No real money is at risk. This is not financial advice, and nothing here is a recommendation to buy, sell or hold any security. Prices are end-of-day closes from public sources and may contain errors or delays. The Congress and Trump mirror portfolios are based on public financial disclosures, which can be filed up to 45 days after a trade; they are our own interpretation, not the officials’ actual current holdings, and this project is not affiliated with any official. Past performance of fictional portfolios does not predict future results.</p>
+    <div class="right" id="updated">Updated each trading day<br>End-of-day prices from public sources</div>
+  </div>
+</footer>
+
+<script>document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');</script>
+<script>
+const D = window.TENK;
+const P = D.portfolios.map(p => ({...p, h: p.h.map(x => ({...x}))}));
+const RET = D.retired;
+const VOO = {inception: D.voo["2026-06-18"], now: D.voo.now};
+const benchFor = p => (VOO.now / (D.voo[p.start] || VOO.inception) - 1) * 100;
+const ASOF = new Date(D.asof + "T12:00:00");
+const ASOF_TXT = ASOF.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+
+const FAM={long:"Long-term",congress:"Congress",climate:"Climate / Tech",trump:"Trump",dividend:"Dividend",bonds:"Bonds",short:"Short-term",discount:"Discount",infra:"AI Infra"};
+const FAM_DESC={
+  long:"Three portfolios built for decades — index cores, dividend aristocrats, and quality compounders. The boring money.",
+  congress:"Mirror trades disclosed by members of Congress. If the people writing the rules are buying, maybe they know something.",
+  climate:"Clean energy, nuclear, EV, and grid infrastructure. The thesis is that the energy transition is real, but volatile.",
+  trump:"Replicating the trades from Trump-associated financial disclosures. Political investing, taken literally.",
+  dividend:"Six high-yield stocks selected purely for income. Reinvesting dividends, compounding quarterly.",
+  bonds:"A five-rung bond ETF ladder from treasuries to high-yield. The anti-stock portfolio.",
+  short:"Quick-hit catalyst trades — earnings plays, momentum setups, sector rotations. Higher turnover, shorter holds.",
+  discount:"Stocks trading below intrinsic value on standard screens — low P/E, high free cash flow, overlooked by the market.",
+  infra:"The picks-and-shovels AI bet: power companies, data centers, networking, and the companies building the infrastructure behind the boom."
+};
+
+// ── Compute ──
+P.forEach(p => {
+  p.hv = p.h.reduce((s,x) => s + x.sh * x.mk, 0);
+  p.value = p.hv + p.cash + (p.income || 0);
+  p.ret = (p.value / 10000 - 1) * 100;
+  p.bench = benchFor(p);
+  p.alpha = p.ret - p.bench;
+});
+const sorted = [...P].sort((a,b) => b.ret - a.ret);
+const fmt = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => '$' + Math.round(n).toLocaleString('en-US');
+const sgn = (x,d=2) => (x > 0.004 ? '+' : x < -0.004 ? '−' : '') + Math.abs(x).toFixed(d);
+const cls = x => x > 0.004 ? 'gain' : x < -0.004 ? 'loss' : '';
+
+const activeTotal = P.reduce((s,p) => s + p.value, 0);
+const retiredTotal = RET.reduce((s,r) => s + r.value, 0);
+const grand = activeTotal + retiredTotal;
+const cost = 180000;
+const benchPct = P[0].bench;
+const beat = P.filter(p => p.alpha > 0).length;
+const best = sorted[0];
+const totalIncome = P.reduce((s,p) => s + (p.income || 0), 0);
+const inception = new Date('2026-06-18');
+const today = ASOF;
+const days = Math.floor((today - inception) / 86400000);
+
+// ── Stats ──
+document.getElementById('stats').innerHTML = `
+  <div class="stat-cell"><div class="stat-label">grand total</div><div class="stat-val">${fmt(grand)}</div><div class="stat-note ${cls(grand/cost-1)}">${sgn((grand/cost-1)*100)}% on ${fmt0(cost)} invested</div></div>
+  <div class="stat-cell"><div class="stat-label">experiment age</div><div class="stat-val">${days} days</div><div class="stat-note">since June 18, 2026</div></div>
+  <div class="stat-cell"><div class="stat-label">beating the s&p</div><div class="stat-val">${beat} of ${P.length}</div><div class="stat-note">VOO ${sgn(benchPct)}% same period</div></div>
+  <div class="stat-cell"><div class="stat-label">income collected</div><div class="stat-val gain">${fmt(totalIncome)}</div><div class="stat-note">dividends + interest</div></div>`;
+
+// ── Scoreboard ──
+document.getElementById('board').innerHTML = `
+  <thead><tr><th>#</th><th>portfolio</th><th>value</th><th>return</th><th>vs s&p 500</th></tr></thead>
+  <tbody>${sorted.map((p,i) => `<tr>
+    <td class="rank">${i+1}</td>
+    <td><span class="pname">${p.name}</span><span class="fam">${FAM[p.fam]}</span></td>
+    <td style="font-family:var(--f-mono);font-size:13px">${fmt(p.value)}</td>
+    <td style="font-family:var(--f-mono);font-size:13px" class="${cls(p.ret)}">${sgn(p.ret)}%</td>
+    <td style="font-family:var(--f-mono);font-size:13px" class="${cls(p.alpha)}"><span class="alpha-dot" style="background:${p.alpha>=0?'var(--gain)':'var(--loss)'}"></span>${sgn(p.alpha)} pts</td>
+  </tr>`).join('')}</tbody>`;
+
+// ── Strategies ──
+const famOrder = ['long','congress','climate','trump','dividend','bonds','short','discount','infra'];
+document.getElementById('strat-grid').innerHTML = famOrder.map(f => {
+  const ps = P.filter(p => p.fam === f);
+  const avg = ps.reduce((s,p) => s + p.value, 0) / ps.length;
+  const avgRet = (avg / 10000 - 1) * 100;
+  const wins = ps.filter(p => p.alpha > 0).length;
+  const statusCls = wins === ps.length ? 'gain' : wins === 0 ? 'loss' : '';
+  const statusTxt = wins === ps.length ? 'Beating index' : wins === 0 ? 'Trailing index' : 'Mixed';
+  return `<div class="strat-card">
+    <div class="strat-head"><h3>${FAM[f]}</h3><span class="strat-status ${statusCls}">${statusTxt}</span></div>
+    <div class="strat-desc">${FAM_DESC[f]}</div>
+    <div class="strat-foot">
+      <span class="meta">${ps.length} portfolio${ps.length>1?'s':''}</span>
+      <span class="ret ${cls(avgRet)}">${sgn(avgRet)}%</span>
+    </div>
+  </div>`;
+}).join('');
+</script>
+<script>
+(function () {
+  var D = window.TENK, el = document.getElementById('updated');
+  if (!D || !el) return;
+  function line(t) { var s = document.createElement('span'); s.textContent = t; el.appendChild(s); el.appendChild(document.createElement('br')); }
+  var a = new Date(D.asof + 'T12:00:00');
+  el.textContent = '';
+  line('Prices as of ' + a.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) + ' close');
+  if (D.published) line('Published ' + new Date(D.published).toLocaleString('en-US', {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short'}));
+  if ((Date.now() - a) / 864e5 > 5) line('\u26a0 Data may be out of date');
+})();
+</script>
+</body>
+</html>
