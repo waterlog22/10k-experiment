@@ -5,277 +5,230 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230c171c'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23ffe45c' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23ffe45c'/%3E%3C/svg%3E">
 <title>The 10K Experiment</title>
-<meta name="description" content="An ongoing paper-trading experiment: 15 portfolios, real market prices, full transparency.">
+<meta name="description" content="An AI runs a set of $10,000 paper portfolios, each with its own strategy, at real market prices. See which one is winning and what it holds.">
 <link rel="stylesheet" href="fonts/fonts.css">
-<style>
-:root {
-  --bg: #1d1c1a; --surface: #252422; --card: #2b2a27;
-  --border: #363432; --border-lt: #433f3c;
-  --ink: #ece9e3; --ink2: #d5d2cb; --muted: #96938c; --faint: #6e6b64; --dim: #4d4a46;
-  --gain: #4aba82; --gain-soft: rgba(74,186,130,.08);
-  --loss: #d95757; --loss-soft: rgba(217,87,87,.08);
-  --gold: #c4a265;
-  --f-serif: "Instrument Serif", Georgia, serif;
-  --f-sans: "Inter", system-ui, sans-serif;
-  --f-mono: "JetBrains Mono", ui-monospace, monospace;
-  color-scheme: dark;
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; }
-body { background: var(--bg); color: var(--ink); font: 15px/1.65 var(--f-sans); -webkit-font-smoothing: antialiased; }
-a { color: var(--ink); text-decoration: none; transition: color .2s; }
-a:hover { color: var(--gold); }
-
-/* ─── Nav ─── */
-nav { border-bottom: 1px solid var(--border); }
-.nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 52px; }
-.nav-logo { font: 400 18px var(--f-serif); color: var(--ink); letter-spacing: -.01em; }
-.nav-links { display: flex; gap: 28px; margin-left: auto; }
-.nav-links a { font: 500 13px var(--f-sans); color: var(--muted); }
-.nav-links a:hover, .nav-links a.active { color: var(--ink); }
-
-/* ─── Hero ─── */
-.hero { max-width: 1100px; margin: 0 auto; padding: 80px 24px 56px; }
-.hero h1 { font: 400 clamp(44px, 7vw, 80px)/1 var(--f-serif); color: var(--ink); margin-bottom: 24px; }
-.hero h1 em { font-style: italic; color: var(--gold); }
-.hero-sub { font-size: 17px; color: var(--muted); max-width: 540px; line-height: 1.6; margin-bottom: 40px; }
-.hero-link { font: 500 14px var(--f-sans); color: var(--gold); display: inline-flex; align-items: center; gap: 6px; }
-.hero-link:hover { color: var(--ink); }
-.hero-link svg { width: 14px; height: 14px; }
-
-/* ─── Stat bar ─── */
-.stat-bar { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
-.stat-bar-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-.stat-cell { padding: 28px 0; }
-.stat-cell + .stat-cell { border-left: 1px solid var(--border); padding-left: 24px; }
-.stat-label { font: 400 12px var(--f-sans); color: var(--faint); margin-bottom: 4px; text-transform: lowercase; }
-.stat-val { font: 600 22px/1.1 var(--f-mono); letter-spacing: -.02em; }
-.stat-note { font: 400 12px var(--f-sans); color: var(--muted); margin-top: 2px; }
-.gain { color: var(--gain); } .loss { color: var(--loss); }
-
-/* ─── Sections ─── */
-.wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
-.section { padding: 64px 0; }
-.section + .section { border-top: 1px solid var(--border); }
-.section-label { font: 400 13px var(--f-sans); color: var(--faint); text-transform: lowercase; letter-spacing: .04em; margin-bottom: 20px; }
-
-/* ─── How it works ─── */
-.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
-.rule { background: var(--surface); padding: 28px 24px; }
-.rule h3 { font: 400 17px var(--f-serif); color: var(--ink); margin-bottom: 8px; }
-.rule p { font-size: 13px; color: var(--muted); line-height: 1.55; }
-
-/* ─── Scoreboard ─── */
-.board { width: 100%; border-collapse: collapse; font-size: 14px; }
-.board thead th { font: 500 11px var(--f-sans); color: var(--faint); padding: 0 12px 12px; text-align: left; text-transform: lowercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); }
-.board thead th:nth-child(n+3) { text-align: right; }
-.board tbody td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-.board tbody td:nth-child(n+3) { text-align: right; font-family: var(--f-mono); font-size: 13px; }
-.board tbody tr { transition: background .15s; }
-.board tbody tr:hover { background: var(--surface); }
-.board .rank { font: 500 13px var(--f-mono); color: var(--dim); width: 32px; }
-.board .pname { font-weight: 500; }
-.board .fam { font: 400 11px var(--f-sans); color: var(--faint); margin-left: 8px; }
-.board .alpha-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
-
-/* ─── Strategies ─── */
-.strat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
-.strat-card { background: var(--surface); padding: 28px 24px; display: grid; gap: 12px; }
-.strat-card:hover { background: var(--card); }
-.strat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.strat-head h3 { font: 400 19px var(--f-serif); color: var(--ink); }
-.strat-status { font: 500 12px var(--f-mono); }
-.strat-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
-.strat-foot { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; border-top: 1px solid var(--border); }
-.strat-foot .meta { font-size: 12px; color: var(--faint); }
-.strat-foot .ret { font: 600 16px var(--f-mono); }
-
-/* ─── Footer ─── */
-footer { border-top: 1px solid var(--border); margin-top: 20px; padding: 40px 24px; }
-footer .inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
-footer p { font-size: 13px; color: var(--faint); max-width: 520px; line-height: 1.55; }
-footer .right { font: 400 12px var(--f-sans); color: var(--dim); text-align: right; }
-
-/* ─── Responsive ─── */
-@media (max-width: 640px) {
-  .hero { padding: 48px 20px 36px; }
-  .stat-cell + .stat-cell { border-left: 0; border-top: 1px solid var(--border); padding-left: 0; }
-  .strat-grid, .rules { grid-template-columns: 1fr; }
-  .board .fam { display: none; }
-  footer .inner { flex-direction: column; }
-  .wrap, .nav-inner { padding: 0 16px; }
-}
-</style>
+<link rel="stylesheet" href="site.css?v=4">
 </head>
 <body>
 
-<nav>
-  <div class="nav-inner">
-    <a href="index.html" class="nav-logo">The 10K Experiment</a>
-    <div class="nav-links">
-      <a href="index.html" class="active">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="methodology.html">Methodology</a>
-    </div>
+<header class="nav">
+  <div class="pill">
+    <a class="mark-logo" href="#home" aria-label="The 10K Experiment, home"><i></i><span>The 10K Experiment</span></a>
+    <nav aria-label="Main">
+      <a href="#home" data-nav="home">Leaderboard</a>
+      <a href="#portfolios" data-nav="portfolios">Portfolios</a>
+      <a href="#analytics" data-nav="analytics">Analytics</a>
+      <a href="#method" data-nav="method">Method</a>
+    </nav>
   </div>
-</nav>
+</header>
 
-<div class="hero">
-  <h1>The <em>10K</em><br>Experiment</h1>
-  <p class="hero-sub">Ten thousand dollars and infinite creative portfolio strategies under the control of AI. What will it do?</p>
-  <a href="dashboard.html" class="hero-link">
-    View live dashboard
-    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
-  </a>
-</div>
+<main>
 
-<div class="stat-bar">
-  <div class="stat-bar-inner" id="stats"></div>
-</div>
+<!-- ═════════ Leaderboard (home) ═════════ -->
+<section class="view" id="v-home">
+  <div class="hero4" id="hero">
+    <div class="wrap hero4-grid">
+      <div>
+        <h1 class="h1">Can an AI beat the market with $10,000?</h1>
+        <p class="hero-line" id="hero-line"></p>
+        <p class="lede" id="hero-lede"></p>
+        <button class="cta" data-scroll="race">See who is winning</button>
+      </div>
+      <div class="top3">
+        <p class="top3-h">Leading today</p>
+        <ol id="top3"></ol>
+        <button class="top3-more" data-scroll="leaderboard">Full leaderboard</button>
+      </div>
+    </div>
+    <div class="wrap"><dl class="hfacts" id="hfacts"></dl></div>
+  </div>
 
-<div class="wrap">
+  <div class="tape" id="tape" aria-label="Every stock held, with its gain or loss since purchase"></div>
 
-  <div class="section">
-    <div class="section-label">the rules</div>
+  <section class="race" id="race">
+    <div class="race-pin">
+      <div class="wrap" style="width:100%">
+        <div class="race-cap"><h2 class="h2 a" id="cap-a">Day 0. Every portfolio gets $10,000.</h2><h2 class="h2 b" id="cap-b"></h2></div>
+        <figure class="field-box">
+          <div class="field-top">
+            <p>Each circle is one portfolio, numbered by rank. Pick one to see what it holds.</p>
+            <div class="key">
+              <span><i class="fill"></i>beating the S&amp;P 500</span>
+              <span><i></i>trailing it</span>
+              <span><i class="sp"></i>S&amp;P 500 since day one</span>
+            </div>
+          </div>
+          <svg id="field" role="group" aria-label="Every portfolio placed by its current value"></svg>
+        </figure>
+        <p class="recap" id="recap"></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap band" id="leaderboard" data-rise>
+    <div class="band-head">
+      <div>
+        <h2 class="h2">Leaderboard</h2>
+        <p class="sub">Every portfolio is judged on its own $10,000. Pick a row to open the portfolio.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Rank by" id="sort">
+        <button aria-pressed="true" data-sort="ret">Rank by return</button>
+        <button aria-pressed="false" data-sort="alpha">vs S&amp;P 500</button>
+      </div>
+    </div>
+    <div class="tools"><div class="chips" id="fam-chips" role="group" aria-label="Filter by strategy"></div></div>
+    <div class="board-head" id="board-head" data-sort="ret" aria-hidden="true"><span></span><span>Portfolio</span><span class="t">Return, with the S&amp;P marked</span><span class="r v">Value</span><span class="r rt">Return</span><span class="r a">vs S&amp;P</span><span></span></div>
+    <ol class="board" id="board" data-sort="ret" data-grow></ol>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="band-head"><h2 class="h2">The rules</h2></div>
     <div class="rules">
-      <div class="rule">
-        <h3>$10,000 per portfolio</h3>
-        <p>Each strategy starts with the same amount. No reloads, no extra capital. If it goes to zero, it stays there.</p>
-      </div>
-      <div class="rule">
-        <h3>Real closing prices</h3>
-        <p>Every position is marked at its actual market close. No simulated prices, no synthetic data.</p>
-      </div>
-      <div class="rule">
-        <h3>AI picks everything</h3>
-        <p>Research, stock selection, position sizing — all done by the AI. Reasoning is documented before each trade. No human overrides.</p>
-      </div>
-      <div class="rule">
-        <h3>Open ledger</h3>
-        <p>Every holding, every trade, every dollar is published. You can verify any number against the market yourself.</p>
-      </div>
+      <div><h3 class="h3">$10,000 per portfolio</h3><p>Each strategy starts with the same amount. No reloads, no extra capital. If it goes to zero, it stays there.</p></div>
+      <div><h3 class="h3">Real closing prices</h3><p>Every position is marked at its actual market close. No simulated prices, no synthetic data.</p></div>
+      <div><h3 class="h3">AI picks everything</h3><p>Research, stock selection and position sizing are all done by the AI, with reasoning written down before each trade. No human overrides.</p></div>
+      <div><h3 class="h3">Open ledger</h3><p>Every holding and every dollar is published. You can check any number against the market yourself.</p></div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">scoreboard</div>
-    <div style="overflow-x:auto">
-      <table class="board" id="board"></table>
+  <div class="wrap band" id="retired-band" data-rise>
+    <div class="band-head"><div><h2 class="h2">Retired</h2><p class="sub">Day trading was dropped: it needs constant watching, which a once-a-day process cannot do. These finished where they finished.</p></div></div>
+    <div class="retired" id="retired"></div>
+  </div>
+</section>
+
+<!-- ═════════ Portfolios ═════════ -->
+<section class="view" id="v-portfolios" hidden>
+  <div class="wrap page-top">
+    <h1 class="h1" style="max-width:none">Portfolios</h1>
+    <p class="lede">Each one is a separate $10,000 account with its own strategy. Open any of them to see every position.</p>
+  </div>
+  <div class="wrap" style="padding-top:36px">
+    <div class="tools"><div class="chips" id="fam-chips-2" role="group" aria-label="Filter by strategy"></div></div>
+    <div class="cards" id="cards"></div>
+  </div>
+</section>
+
+<!-- ═════════ One portfolio ═════════ -->
+<section class="view" id="v-portfolio" hidden>
+  <div class="wrap" id="detail"></div>
+</section>
+
+<!-- ═════════ Analytics ═════════ -->
+<section class="view" id="v-analytics" hidden>
+  <div class="wrap page-top">
+    <h1 class="h1" style="max-width:none">Analytics</h1>
+    <p class="lede" id="an-lede"></p>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="band-head"><div><h2 class="h2">Head to head</h2><p class="sub">Put any two portfolios side by side.</p></div></div>
+    <div class="h2h" id="h2h"></div>
+    <p class="shared" id="h2h-shared"></p>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="band-head"><div><h2 class="h2">Every stock the AI owns</h2><p class="sub">Sized by dollars held across all portfolios, colored by gain or loss since purchase. Pick a stock to see who holds it.</p></div></div>
+    <div class="treemap" id="treemap"></div>
+    <div class="scale"><span>−25%</span><i></i><span>+25%</span></div>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="two">
+      <div><h2 class="h2">Best picks</h2><ol class="picks" id="best" style="margin-top:18px"></ol></div>
+      <div><h2 class="h2">Worst picks</h2><ol class="picks" id="worst" style="margin-top:18px"></ol></div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">strategies</div>
-    <div class="strat-grid" id="strat-grid"></div>
+  <div class="wrap band" data-rise>
+    <div class="two">
+      <div>
+        <h2 class="h2">By strategy</h2>
+        <p class="sub" style="margin-top:10px">Average return of the portfolios in each strategy.</p>
+        <ul class="fams" id="fams" data-grow style="margin-top:14px"></ul>
+      </div>
+      <div>
+        <h2 class="h2">Income collected</h2>
+        <p class="sub" style="margin-top:10px">Dividends and interest paid so far, by position.</p>
+        <ul class="fams" id="income" data-grow style="margin-top:14px"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ Method ═════════ -->
+<section class="view" id="v-method" hidden>
+  <div class="wrap page-top">
+    <h1 class="h1" style="max-width:none">Method</h1>
+    <p class="lede" id="method-lede"></p>
   </div>
 
-</div>
+  <div class="wrap band" data-rise>
+    <div class="cols">
+      <div><h3 class="h3">$10,000 each</h3><p>Starting capital per portfolio. No reloads, no margin. Every strategy gets the same shot, and none of them props up another.</p></div>
+      <div><h3 class="h3">Measured against VOO</h3><p>The benchmark is the Vanguard S&amp;P 500 ETF over the same days the portfolio has been running. “vs S&amp;P” is the portfolio's return minus VOO's.</p></div>
+      <div><h3 class="h3">Zero overrides</h3><p>The AI selects every stock, sizes every position and times every entry and exit. No human steps in.</p></div>
+      <div><h3 class="h3">Real prices</h3><p>Positions are marked to actual closing prices from public markets. Nothing is simulated.</p></div>
+      <div><h3 class="h3">Started June 18, 2026</h3><p>The original portfolios were funded on the same day. Portfolios added later are measured from their own start date.</p></div>
+      <div><h3 class="h3">Not backtested</h3><p>Every trade is made in real time. There is no hindsight, and the AI does not know what prices will do tomorrow.</p></div>
+    </div>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="band-head"><h2 class="h2">What happens each trading day</h2></div>
+    <ol class="steps">
+      <li><div><h3 class="h3">Fetch closing prices</h3><p>After the market closes, the AI pulls the real closing price of every holding in every portfolio.</p></div></li>
+      <li><div><h3 class="h3">Check stops and targets</h3><p>Each position is checked against its strategy's rules: stop losses, profit targets, rebalancing triggers and income due.</p></div></li>
+      <li><div><h3 class="h3">Make the trades</h3><p>The AI decides whether to hold, trim, add or exit. The reasoning is written down before anything is executed.</p></div></li>
+      <li><div><h3 class="h3">Update the ledger</h3><p>Every trade, dividend and price change is recorded, and this site is republished with the new numbers.</p></div></li>
+      <li><div><h3 class="h3">Report</h3><p>A nightly report covers what happened and why. Strategies that are not working get flagged.</p></div></li>
+    </ol>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="band-head"><h2 class="h2">The strategies</h2></div>
+    <div id="strats"></div>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="band-head"><h2 class="h2">How decisions get made</h2></div>
+    <div class="cols">
+      <div><h3 class="h3">Position sizing</h3><p>No single stock is more than 35% of its portfolio at entry. Concentration is allowed when conviction is high, but one name cannot sink the account.</p></div>
+      <div><h3 class="h3">Entries</h3><p>Each strategy has its own signals: valuation screens for the value books, disclosure filings for the political mirrors, sector strength for climate. The reason is recorded before buying.</p></div>
+      <div><h3 class="h3">Exits</h3><p>Short-term books use trailing stops and profit targets. Long-term books act only when a thesis breaks. Every exit follows a rule.</p></div>
+      <div><h3 class="h3">Income</h3><p>Dividends, interest and distributions are tracked separately from price gains and counted in the portfolio's value.</p></div>
+      <div><h3 class="h3">Benchmark</h3><p>Each portfolio is compared with VOO over its own holding period, so a portfolio that started later is not flattered or punished by timing.</p></div>
+      <div><h3 class="h3">Retirement</h3><p>When a strategy is dropped, its portfolio is retired and its final value is frozen on the record. It stops counting in the rankings.</p></div>
+    </div>
+  </div>
+
+  <div class="wrap band" data-rise>
+    <div class="band-head"><h2 class="h2">What this is not</h2></div>
+    <ul class="nots">
+      <li><h3 class="h3">Financial advice</h3><p>This is a research experiment with fictional portfolios. Nothing here is a recommendation to buy, sell or hold any security.</p></li>
+      <li><h3 class="h3">A trading signal</h3><p>Sizes, entry prices and timing are specific to this experiment's constraints. Copying these trades in a real account is discouraged.</p></li>
+      <li><h3 class="h3">One big fund</h3><p>The portfolios are never added together. The point is to see what a single $10,000 would have done under each strategy.</p></li>
+    </ul>
+  </div>
+</section>
+
+</main>
 
 <footer>
-  <div class="inner">
+  <div class="wrap">
     <p>The 10K Experiment is a paper-trading research project run by an AI. No real money is at risk. This is not financial advice, and nothing here is a recommendation to buy, sell or hold any security. Prices are end-of-day closes from public sources and may contain errors or delays. The Congress and Trump mirror portfolios are based on public financial disclosures, which can be filed up to 45 days after a trade; they are our own interpretation, not the officials’ actual current holdings, and this project is not affiliated with any official. Past performance of fictional portfolios does not predict future results.</p>
-    <div class="right" id="updated">Updated each trading day<br>End-of-day prices from public sources</div>
+    <div class="upd" id="updated">Updated each trading day</div>
   </div>
 </footer>
 
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Details" tabindex="-1"></aside>
+<div id="tip" hidden></div>
+
 <script>document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');</script>
-<script>
-const D = window.TENK;
-const P = D.portfolios.map(p => ({...p, h: p.h.map(x => ({...x}))}));
-const RET = D.retired;
-const VOO = {inception: D.voo["2026-06-18"], now: D.voo.now};
-const benchFor = p => (VOO.now / (D.voo[p.start] || VOO.inception) - 1) * 100;
-const ASOF = new Date(D.asof + "T12:00:00");
-const ASOF_TXT = ASOF.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-
-const FAM={long:"Long-term",congress:"Congress",climate:"Climate / Tech",trump:"Trump",dividend:"Dividend",bonds:"Bonds",short:"Short-term",discount:"Discount",infra:"AI Infra"};
-const FAM_DESC={
-  long:"Three portfolios built for decades — index cores, dividend aristocrats, and quality compounders. The boring money.",
-  congress:"Mirror trades disclosed by members of Congress. If the people writing the rules are buying, maybe they know something.",
-  climate:"Clean energy, nuclear, EV, and grid infrastructure. The thesis is that the energy transition is real, but volatile.",
-  trump:"Replicating the trades from Trump-associated financial disclosures. Political investing, taken literally.",
-  dividend:"Six high-yield stocks selected purely for income. Reinvesting dividends, compounding quarterly.",
-  bonds:"A five-rung bond ETF ladder from treasuries to high-yield. The anti-stock portfolio.",
-  short:"Quick-hit catalyst trades — earnings plays, momentum setups, sector rotations. Higher turnover, shorter holds.",
-  discount:"Stocks trading below intrinsic value on standard screens — low P/E, high free cash flow, overlooked by the market.",
-  infra:"The picks-and-shovels AI bet: power companies, data centers, networking, and the companies building the infrastructure behind the boom."
-};
-
-// ── Compute ──
-P.forEach(p => {
-  p.hv = p.h.reduce((s,x) => s + x.sh * x.mk, 0);
-  p.value = p.hv + p.cash + (p.income || 0);
-  p.ret = (p.value / 10000 - 1) * 100;
-  p.bench = benchFor(p);
-  p.alpha = p.ret - p.bench;
-});
-const sorted = [...P].sort((a,b) => b.ret - a.ret);
-const fmt = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmt0 = n => '$' + Math.round(n).toLocaleString('en-US');
-const sgn = (x,d=2) => (x > 0.004 ? '+' : x < -0.004 ? '−' : '') + Math.abs(x).toFixed(d);
-const cls = x => x > 0.004 ? 'gain' : x < -0.004 ? 'loss' : '';
-
-const activeTotal = P.reduce((s,p) => s + p.value, 0);
-const retiredTotal = RET.reduce((s,r) => s + r.value, 0);
-const grand = activeTotal + retiredTotal;
-const cost = 180000;
-const benchPct = P[0].bench;
-const beat = P.filter(p => p.alpha > 0).length;
-const best = sorted[0];
-const totalIncome = P.reduce((s,p) => s + (p.income || 0), 0);
-const inception = new Date('2026-06-18');
-const today = ASOF;
-const days = Math.floor((today - inception) / 86400000);
-
-// ── Stats ──
-document.getElementById('stats').innerHTML = `
-  <div class="stat-cell"><div class="stat-label">grand total</div><div class="stat-val">${fmt(grand)}</div><div class="stat-note ${cls(grand/cost-1)}">${sgn((grand/cost-1)*100)}% on ${fmt0(cost)} invested</div></div>
-  <div class="stat-cell"><div class="stat-label">experiment age</div><div class="stat-val">${days} days</div><div class="stat-note">since June 18, 2026</div></div>
-  <div class="stat-cell"><div class="stat-label">beating the s&p</div><div class="stat-val">${beat} of ${P.length}</div><div class="stat-note">VOO ${sgn(benchPct)}% same period</div></div>
-  <div class="stat-cell"><div class="stat-label">income collected</div><div class="stat-val gain">${fmt(totalIncome)}</div><div class="stat-note">dividends + interest</div></div>`;
-
-// ── Scoreboard ──
-document.getElementById('board').innerHTML = `
-  <thead><tr><th>#</th><th>portfolio</th><th>value</th><th>return</th><th>vs s&p 500</th></tr></thead>
-  <tbody>${sorted.map((p,i) => `<tr>
-    <td class="rank">${i+1}</td>
-    <td><span class="pname">${p.name}</span><span class="fam">${FAM[p.fam]}</span></td>
-    <td style="font-family:var(--f-mono);font-size:13px">${fmt(p.value)}</td>
-    <td style="font-family:var(--f-mono);font-size:13px" class="${cls(p.ret)}">${sgn(p.ret)}%</td>
-    <td style="font-family:var(--f-mono);font-size:13px" class="${cls(p.alpha)}"><span class="alpha-dot" style="background:${p.alpha>=0?'var(--gain)':'var(--loss)'}"></span>${sgn(p.alpha)} pts</td>
-  </tr>`).join('')}</tbody>`;
-
-// ── Strategies ──
-const famOrder = ['long','congress','climate','trump','dividend','bonds','short','discount','infra'];
-document.getElementById('strat-grid').innerHTML = famOrder.map(f => {
-  const ps = P.filter(p => p.fam === f);
-  const avg = ps.reduce((s,p) => s + p.value, 0) / ps.length;
-  const avgRet = (avg / 10000 - 1) * 100;
-  const wins = ps.filter(p => p.alpha > 0).length;
-  const statusCls = wins === ps.length ? 'gain' : wins === 0 ? 'loss' : '';
-  const statusTxt = wins === ps.length ? 'Beating index' : wins === 0 ? 'Trailing index' : 'Mixed';
-  return `<div class="strat-card">
-    <div class="strat-head"><h3>${FAM[f]}</h3><span class="strat-status ${statusCls}">${statusTxt}</span></div>
-    <div class="strat-desc">${FAM_DESC[f]}</div>
-    <div class="strat-foot">
-      <span class="meta">${ps.length} portfolio${ps.length>1?'s':''}</span>
-      <span class="ret ${cls(avgRet)}">${sgn(avgRet)}%</span>
-    </div>
-  </div>`;
-}).join('');
-</script>
-<script>
-(function () {
-  var D = window.TENK, el = document.getElementById('updated');
-  if (!D || !el) return;
-  function line(t) { var s = document.createElement('span'); s.textContent = t; el.appendChild(s); el.appendChild(document.createElement('br')); }
-  var a = new Date(D.asof + 'T12:00:00');
-  el.textContent = '';
-  line('Prices as of ' + a.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) + ' close');
-  if (D.published) line('Published ' + new Date(D.published).toLocaleString('en-US', {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short'}));
-  if ((Date.now() - a) / 864e5 > 5) line('\u26a0 Data may be out of date');
-})();
-</script>
+<script src="site.js?v=4"></script>
 </body>
 </html>
