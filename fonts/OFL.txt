@@ -1,4 +1,4 @@
-Fonts: Inter (Copyright The Inter Project Authors), Instrument Serif (Copyright The Instrument Serif Project Authors), JetBrains Mono (Copyright The JetBrains Mono Project Authors). Licensed under the SIL Open Font License 1.1.
+Fonts: Inter (Copyright The Inter Project Authors), Bricolage Grotesque (Copyright 2022 The Bricolage Grotesque Project Authors, https://github.com/ateliertriay/bricolage), Instrument Serif (Copyright The Instrument Serif Project Authors), JetBrains Mono (Copyright The JetBrains Mono Project Authors). Licensed under the SIL Open Font License 1.1.
 
 Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
 
